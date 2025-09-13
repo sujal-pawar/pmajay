@@ -7,8 +7,6 @@
 4) SIH25023 – AyurSutra: Panchakarma Patient Management & Therapy Scheduling Software
 5) SIH25093-Centralised Digital Platform for Comprehensive student activity record in HEIs
 6) SIH25083-Digital Health Record Management System for migrant workers in Kerala aligned with sustainable development goals.
-7) SIH25017 Digital Platform for Centralized Alumni Data Management and Engagement
-9) SIH25026 Develop API code to integrate NAMASTE and or the International Classification of Diseases (ICD-11)
 
 reserve
 25094
@@ -16,3 +14,6 @@ reserve
 25079
 25031
 25007
+
+
+#final: SIH25027, SIH25083

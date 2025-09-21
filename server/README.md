@@ -7,10 +7,6 @@ Backend server for PM-AJAY Mapping System.
 This folder will contain the backend implementation for the PM-AJAY agency mapping system.
 
 ## Technology Stack (Planned)
-- Node.js/Express.js or similar
+- Node.js
 - Database: PostgreSQL/MongoDB
 - Authentication: JWT
-- API Documentation: Swagger
-
-## Note
-Keep empty for now as per project requirements.

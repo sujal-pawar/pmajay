@@ -1,42 +1,112 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.app {
+  width: 100%;
+  min-height: 100vh;
+  background-color: white;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Navbar Styles */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.pm-ajay-logo {
+  height: 60px;
+  width: auto;
+}
+
+.navbar-text h3 {
+  font-size: 18px;
+  color: #0066cc;
+  margin-bottom: 2px;
+  font-weight: bold;
+}
+
+.navbar-text p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.azadi75-logo {
+  height: 50px;
+  width: auto;
+}
+
+/* Main Content */
+.main-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 100px);
+  background-color: white;
+}
+
+.center-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.namo-image {
+  max-width: 400px;
+  max-height: 400px;
+  width: auto;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
   }
-  to {
-    transform: rotate(360deg);
+  
+  .navbar-left {
+    justify-content: center;
+    text-align: center;
   }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  
+  .navbar-text h3 {
+    font-size: 16px;
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+  
+  .navbar-text p {
+    font-size: 12px;
+  }
+  
+  .pm-ajay-logo, .azadi75-logo {
+    height: 45px;
+  }
+  
+  .namo-image {
+    max-width: 300px;
+    max-height: 300px;
+  }
 }

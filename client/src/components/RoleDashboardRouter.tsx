@@ -7,6 +7,7 @@ import StateDashboard from './dashboards/StateDashboard';
 import DistrictDashboard from './dashboards/DistrictDashboard';
 import DistrictCollectorDashboard from './dashboards/DistrictCollectorDashboard';
 import DistrictPACCDashboard from './dashboards/DistrictPACCDashboard';
+import StateTreasuryDashboard from './dashboards/StateTreasuryDashboard';
 import GramPanchayatDashboard from './dashboards/GramPanchayatDashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { 
@@ -108,6 +109,35 @@ const RoleDashboardRouter: React.FC = () => {
             label: 'Fund Allocation',
             icon: <TrendingUp className="w-4 h-4" />,
             path: '/dashboard/funds',
+            active: false
+          }
+        ];
+
+      case 'state_treasury':
+        return [
+          ...baseItems,
+          {
+            label: 'Fund Transfers',
+            icon: <TrendingUp className="w-4 h-4" />,
+            path: '/dashboard/transfers',
+            active: false
+          },
+          {
+            label: 'Pending Payments',
+            icon: <AlertTriangle className="w-4 h-4" />,
+            path: '/dashboard/payments',
+            active: false
+          },
+          {
+            label: 'PFMS Integration',
+            icon: <CheckCircle className="w-4 h-4" />,
+            path: '/dashboard/pfms',
+            active: false
+          },
+          {
+            label: 'Audit & Compliance',
+            icon: <FileText className="w-4 h-4" />,
+            path: '/dashboard/audit',
             active: false
           }
         ];
@@ -288,6 +318,11 @@ const RoleDashboardRouter: React.FC = () => {
     // Central Government roles
     if (hasPermission(user, PERMISSIONS.READ_ALL_DATA)) {
       return <CentralDashboard />;
+    }
+    
+    // State Treasury - specialized dashboard
+    if (user.role === 'state_treasury') {
+      return <StateTreasuryDashboard />;
     }
     
     // State Government roles

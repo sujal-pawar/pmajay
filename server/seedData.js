@@ -134,6 +134,255 @@ const seedData = async () => {
 
     // --- PROJECTS (Maharashtra only) ---
     const projectData = [
+      // Projects Awaiting District PACC Approval
+      {
+        projectId: 'PMAJAY-MAH-MUM-003',
+        schemeType: 'Housing',
+        projectName: 'Dharavi Housing Development Phase 1',
+        projectDescription: 'Construction of affordable housing units for displaced families in Dharavi slum redevelopment project.',
+        createdBy: users.find(u => u.email === 'gp@govandi.gov.in')._id,
+        location: {
+          state: 'Maharashtra',
+          district: 'Mumbai',
+          block: 'Mahim',
+          village: 'Dharavi',
+          coordinates: { latitude: 19.0440, longitude: 72.8567 }
+        },
+        financials: {
+          estimatedCost: 18000000,
+          sanctionedAmount: 17500000,
+          totalReleased: 0,
+          totalUtilized: 0
+        },
+        timeline: {
+          startDate: new Date('2025-01-15'),
+          scheduledEndDate: new Date('2026-08-15')
+        },
+        status: 'Awaiting PACC Approval',
+        priority: 'High',
+        assignedAgencies: {
+          implementingAgency: 'Maharashtra Housing Development Authority',
+          supervisingOfficer: users.find(u => u.email === 'collector@mumbai.gov.in')._id.toString()
+        },
+        approvals: {
+          paccApprovalStatus: 'Pending',
+          submittedForPACCOn: new Date('2024-12-15'),
+          submittedBy: users.find(u => u.email === 'gp@govandi.gov.in')._id
+        },
+        technicalDetails: {
+          complexity: 'High',
+          duration: 18,
+          beneficiaryCount: 450,
+          projectType: 'Infrastructure Development'
+        }
+      },
+      {
+        projectId: 'PMAJAY-MAH-MUM-004',
+        schemeType: 'Sanitation',
+        projectName: 'Community Toilet Complex - Bandra East',
+        projectDescription: 'Construction of modern community toilet facilities with proper sewage management system.',
+        createdBy: users.find(u => u.email === 'gp@govandi.gov.in')._id,
+        location: {
+          state: 'Maharashtra',
+          district: 'Mumbai',
+          block: 'Bandra',
+          village: 'Bandra East',
+          coordinates: { latitude: 19.0596, longitude: 72.8406 }
+        },
+        financials: {
+          estimatedCost: 4500000,
+          sanctionedAmount: 4200000,
+          totalReleased: 0,
+          totalUtilized: 0
+        },
+        timeline: {
+          startDate: new Date('2025-02-01'),
+          scheduledEndDate: new Date('2025-12-01')
+        },
+        status: 'Awaiting PACC Approval',
+        priority: 'Medium',
+        assignedAgencies: {
+          implementingAgency: 'Municipal Corporation of Greater Mumbai',
+          supervisingOfficer: users.find(u => u.email === 'collector@mumbai.gov.in')._id.toString()
+        },
+        approvals: {
+          paccApprovalStatus: 'Pending',
+          submittedForPACCOn: new Date('2024-12-20'),
+          submittedBy: users.find(u => u.email === 'gp@govandi.gov.in')._id
+        },
+        technicalDetails: {
+          complexity: 'Medium',
+          duration: 10,
+          beneficiaryCount: 800,
+          projectType: 'Sanitation Infrastructure'
+        }
+      },
+      {
+        projectId: 'PMAJAY-MAH-MUM-005',
+        schemeType: 'Water Supply',
+        projectName: 'Bore Well & Water Storage System - Kurla',
+        projectDescription: 'Installation of bore wells and water storage tanks to ensure clean drinking water supply.',
+        createdBy: users.find(u => u.email === 'gp@govandi.gov.in')._id,
+        location: {
+          state: 'Maharashtra',
+          district: 'Mumbai',
+          block: 'Kurla',
+          village: 'Kurla West',
+          coordinates: { latitude: 19.0708, longitude: 72.8794 }
+        },
+        financials: {
+          estimatedCost: 6800000,
+          sanctionedAmount: 6500000,
+          totalReleased: 0,
+          totalUtilized: 0
+        },
+        timeline: {
+          startDate: new Date('2025-03-01'),
+          scheduledEndDate: new Date('2025-11-01')
+        },
+        status: 'Awaiting PACC Approval',
+        priority: 'High',
+        assignedAgencies: {
+          implementingAgency: 'Maharashtra Water Supply Department',
+          supervisingOfficer: users.find(u => u.email === 'collector@mumbai.gov.in')._id.toString()
+        },
+        approvals: {
+          paccApprovalStatus: 'Pending',
+          submittedForPACCOn: new Date('2024-12-18'),
+          submittedBy: users.find(u => u.email === 'gp@govandi.gov.in')._id
+        },
+        technicalDetails: {
+          complexity: 'Medium',
+          duration: 8,
+          beneficiaryCount: 1200,
+          projectType: 'Water Infrastructure'
+        }
+      },
+      {
+        projectId: 'PMAJAY-MAH-MUM-006',
+        schemeType: 'Education',
+        projectName: 'Skill Development Center - Malad',
+        projectDescription: 'Establishment of skill development and vocational training center for SC/ST youth.',
+        createdBy: users.find(u => u.email === 'sc.corp@maharashtra.gov.in')._id,
+        location: {
+          state: 'Maharashtra',
+          district: 'Mumbai',
+          block: 'Malad',
+          village: 'Malad East',
+          coordinates: { latitude: 19.1868, longitude: 72.8547 }
+        },
+        financials: {
+          estimatedCost: 8500000,
+          sanctionedAmount: 8000000,
+          totalReleased: 0,
+          totalUtilized: 0
+        },
+        timeline: {
+          startDate: new Date('2025-04-01'),
+          scheduledEndDate: new Date('2026-03-01')
+        },
+        status: 'Awaiting PACC Approval',
+        priority: 'Medium',
+        assignedAgencies: {
+          implementingAgency: 'Maharashtra State SC Development Corporation',
+          supervisingOfficer: users.find(u => u.email === 'collector@mumbai.gov.in')._id.toString()
+        },
+        approvals: {
+          paccApprovalStatus: 'Pending',
+          submittedForPACCOn: new Date('2024-12-22'),
+          submittedBy: users.find(u => u.email === 'sc.corp@maharashtra.gov.in')._id
+        },
+        technicalDetails: {
+          complexity: 'Medium',
+          duration: 12,
+          beneficiaryCount: 300,
+          projectType: 'Education & Training'
+        }
+      },
+      {
+        projectId: 'PMAJAY-MAH-MUM-007',
+        schemeType: 'Healthcare',
+        projectName: 'Primary Health Center Upgrade - Andheri',
+        projectDescription: 'Modernization of existing PHC with new equipment, staff quarters and ambulance facility.',
+        createdBy: users.find(u => u.email === 'gp@govandi.gov.in')._id,
+        location: {
+          state: 'Maharashtra',
+          district: 'Mumbai',
+          block: 'Andheri',
+          village: 'Andheri West',
+          coordinates: { latitude: 19.1355, longitude: 72.8267 }
+        },
+        financials: {
+          estimatedCost: 12500000,
+          sanctionedAmount: 12000000,
+          totalReleased: 0,
+          totalUtilized: 0
+        },
+        timeline: {
+          startDate: new Date('2025-02-15'),
+          scheduledEndDate: new Date('2026-02-15')
+        },
+        status: 'Awaiting PACC Approval',
+        priority: 'High',
+        assignedAgencies: {
+          implementingAgency: 'Maharashtra Health Department',
+          supervisingOfficer: users.find(u => u.email === 'collector@mumbai.gov.in')._id.toString()
+        },
+        approvals: {
+          paccApprovalStatus: 'Pending',
+          submittedForPACCOn: new Date('2024-12-25'),
+          submittedBy: users.find(u => u.email === 'gp@govandi.gov.in')._id
+        },
+        technicalDetails: {
+          complexity: 'High',
+          duration: 12,
+          beneficiaryCount: 2500,
+          projectType: 'Healthcare Infrastructure'
+        }
+      },
+      {
+        projectId: 'PMAJAY-MAH-MUM-008',
+        schemeType: 'Roads',
+        projectName: 'Internal Road Network - Powai',
+        projectDescription: 'Construction of concrete roads within slum areas and connection to main roads.',
+        createdBy: users.find(u => u.email === 'gp@govandi.gov.in')._id,
+        location: {
+          state: 'Maharashtra',
+          district: 'Mumbai',
+          block: 'Powai',
+          village: 'Powai',
+          coordinates: { latitude: 19.1176, longitude: 72.9060 }
+        },
+        financials: {
+          estimatedCost: 7200000,
+          sanctionedAmount: 6800000,
+          totalReleased: 0,
+          totalUtilized: 0
+        },
+        timeline: {
+          startDate: new Date('2025-03-15'),
+          scheduledEndDate: new Date('2025-12-15')
+        },
+        status: 'Awaiting PACC Approval',
+        priority: 'Medium',
+        assignedAgencies: {
+          implementingAgency: 'Maharashtra Public Works Department',
+          supervisingOfficer: users.find(u => u.email === 'collector@mumbai.gov.in')._id.toString()
+        },
+        approvals: {
+          paccApprovalStatus: 'Pending',
+          submittedForPACCOn: new Date('2024-12-28'),
+          submittedBy: users.find(u => u.email === 'gp@govandi.gov.in')._id
+        },
+        technicalDetails: {
+          complexity: 'Medium',
+          duration: 9,
+          beneficiaryCount: 600,
+          projectType: 'Road Infrastructure'
+        }
+      },
+      
+      // Existing approved/in-progress projects
       {
         projectId: 'PMAJAY-MAH-MUM-001',
         schemeType: 'Adarsh Gram',
@@ -163,6 +412,17 @@ const seedData = async () => {
           implementingAgency: 'Maharashtra Urban Development Agency',
           contractorId: users.find(u => u.email === 'contractor@mahbuild.com')._id.toString(),
           supervisingOfficer: users.find(u => u.email === 'collector@mumbai.gov.in')._id.toString()
+        },
+        approvals: {
+          paccApprovalStatus: 'Approved',
+          paccApprovalDate: new Date('2024-01-15'),
+          approvedBy: users.find(u => u.email === 'pacc@mumbai.gov.in')._id
+        },
+        technicalDetails: {
+          complexity: 'High',
+          duration: 18,
+          beneficiaryCount: 850,
+          projectType: 'Comprehensive Development'
         }
       },
       {

@@ -12,7 +12,7 @@ const projectSchema = new mongoose.Schema(
     schemeType: {
       type: String,
       required: true,
-      enum: ['Adarsh Gram', 'GIA', 'Hostel', 'Rural Development', 'Infrastructure'],
+      enum: ['Adarsh Gram', 'GIA', 'Hostel', 'Rural Development', 'Infrastructure', 'Housing', 'Sanitation', 'Water Supply', 'Education', 'Healthcare', 'Roads'],
       index: true
     },
     projectName: {
@@ -73,7 +73,7 @@ const projectSchema = new mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ['Planned', 'In Progress', 'Completed', 'On Hold', 'Cancelled'],
+      enum: ['Planned', 'Awaiting PACC Approval', 'In Progress', 'Completed', 'On Hold', 'Cancelled'],
       default: 'Planned',
       index: true
     },
@@ -88,6 +88,21 @@ const projectSchema = new mongoose.Schema(
       supervisingOfficer: String
     },
     approvals: {
+      paccApprovalStatus: {
+        type: String,
+        enum: ['Pending', 'Approved', 'Rejected'],
+        default: 'Pending'
+      },
+      paccApprovalDate: Date,
+      submittedForPACCOn: Date,
+      submittedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      approvedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
       districtApprovalStatus: {
         type: String,
         enum: ['Pending', 'Approved', 'Rejected'],
@@ -104,6 +119,22 @@ const projectSchema = new mongoose.Schema(
         default: 'Pending'
       },
       approvalDate: Date
+    },
+    technicalDetails: {
+      complexity: {
+        type: String,
+        enum: ['Low', 'Medium', 'High'],
+        default: 'Medium'
+      },
+      duration: {
+        type: Number, // in months
+        required: true
+      },
+      beneficiaryCount: {
+        type: Number,
+        required: true
+      },
+      projectType: String
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

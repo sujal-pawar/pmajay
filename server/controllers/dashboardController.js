@@ -399,8 +399,5 @@ async function getUserSupportRequests() { return 45; }
 async function getSystemErrors() { return 3; }
 async function getSupportQueue() { return []; }
 
-module.exports = {
-  getDashboardData,
-  getDashboardWidgets,
-  getDashboardNavigation
-};
+// Note: Functions are already exported using exports.functionName above
+// No need for additional module.exports since we used exports.* pattern

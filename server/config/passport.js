@@ -15,6 +15,5 @@ const generateToken = (user) => {
 };
 
 module.exports = {
-  passport,
   generateToken
 };

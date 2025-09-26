@@ -229,6 +229,27 @@ export const projectsApi = {
 
   async getDashboard(projectId: string, token?: string): Promise<any> {
     return apiRequest(`${API_BASE_URL}/projects/${projectId}/dashboard`, {}, token);
+  },
+
+  async getPendingPACCApprovals(params?: { page?: number; limit?: number }, token?: string): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+    
+    const url = `${API_BASE_URL}/projects/pending-pacc-approval${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return apiRequest(url, {}, token);
+  },
+
+  async makePACCDecision(projectId: string, decisionData: any, token?: string): Promise<any> {
+    return apiRequest(`${API_BASE_URL}/projects/${projectId}/pacc-decision`, {
+      method: 'POST',
+      body: JSON.stringify(decisionData),
+    }, token);
   }
 };
 

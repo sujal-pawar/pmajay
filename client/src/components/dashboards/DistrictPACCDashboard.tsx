@@ -50,7 +50,9 @@ interface ProjectAppraisal {
 
 interface Project {
   _id: string;
+  projectId: string;
   projectName: string;
+  projectDescription: string;
   status: string;
   location: {
     state: string;
@@ -59,21 +61,33 @@ interface Project {
     village?: string;
   };
   financials: {
+    estimatedCost: number;
     sanctionedAmount: number;
-    releasedAmount: number;
-    utilizedAmount: number;
+    totalReleased: number;
+    totalUtilized: number;
   };
   schemeType: string;
-  startDate: string;
-  endDate: string;
+  timeline: {
+    startDate: string;
+    scheduledEndDate: string;
+  };
+  priority: string;
   approvals?: {
     paccApprovalStatus: string;
-    technicalApprovalDate?: string;
+    paccApprovalDate?: string;
+    submittedForPACCOn?: string;
+    submittedBy?: string;
+    approvedBy?: string;
   };
   technicalDetails?: {
     complexity: string;
     duration: number;
     beneficiaryCount: number;
+    projectType: string;
+  };
+  assignedAgencies?: {
+    implementingAgency?: string;
+    supervisingOfficer?: string;
   };
 }
 
@@ -108,27 +122,40 @@ const DistrictPACCDashboard: React.FC = () => {
       const districtFilter = user?.jurisdiction?.district;
       const stateFilter = user?.jurisdiction?.state;
       
-      // Fetch all projects for the district
-      const response = await projectsApi.getAll({ 
-        limit: 100, 
-        state: stateFilter,
-        district: districtFilter 
-      }, token || undefined);
+      // Fetch projects pending PACC approval directly
+      console.log('Fetching pending PACC approvals, token:', !!token);
       
-      const projectsData = response?.data?.projects || response?.data || [];
-      const safeProjects = Array.isArray(projectsData) ? projectsData : [];
+      const [allProjectsResponse, pendingPACCResponse] = await Promise.all([
+        // Get all projects for statistics
+        projectsApi.getAll({ 
+          limit: 100, 
+          state: stateFilter,
+          district: districtFilter 
+        }, token || undefined),
+        // Get pending PACC approvals specifically
+        projectsApi.getPendingPACCApprovals({ limit: 100 }, token || undefined)
+      ]);
       
-      setProjects(safeProjects);
+      console.log('All Projects Response:', allProjectsResponse);
+      console.log('Pending PACC Response:', pendingPACCResponse);
       
-      // Filter projects needing PACC appraisal
-      const pendingPACCAppraisals = safeProjects.filter((project: Project) => 
-        project.approvals?.paccApprovalStatus === 'Pending' ||
-        !project.approvals?.paccApprovalStatus
-      );
-      setPendingAppraisals(pendingPACCAppraisals);
+      // Handle paginated response from mongoose-paginate-v2
+      const allProjectsData = allProjectsResponse?.data?.docs || allProjectsResponse?.data?.projects || allProjectsResponse?.data || [];
+      const safeAllProjects = Array.isArray(allProjectsData) ? allProjectsData : [];
+      
+      const pendingProjectsData = pendingPACCResponse?.data?.docs || pendingPACCResponse?.data?.projects || pendingPACCResponse?.data || [];
+      const safePendingProjects = Array.isArray(pendingProjectsData) ? pendingProjectsData : [];
+      
+      console.log('All projects:', safeAllProjects);
+      console.log('All projects count:', safeAllProjects.length);
+      console.log('Pending projects:', safePendingProjects);
+      console.log('Pending projects count:', safePendingProjects.length);
+      
+      setProjects(safeAllProjects);
+      setPendingAppraisals(safePendingProjects);
       
       // Mock appraisal data (in real app, this would come from API)
-      const mockAppraisals: ProjectAppraisal[] = safeProjects.map((project, index) => ({
+      const mockAppraisals: ProjectAppraisal[] = safeAllProjects.map((project, index) => ({
         _id: `appraisal_${project._id}`,
         projectId: project._id,
         projectName: project.projectName,
@@ -157,16 +184,16 @@ const DistrictPACCDashboard: React.FC = () => {
       setAppraisals(mockAppraisals);
       
       // Calculate statistics
-      const totalProjects = safeProjects.length;
-      const pendingAppraisalsCount = pendingPACCAppraisals.length;
+      const totalProjects = safeAllProjects.length;
+      const pendingAppraisalsCount = safePendingProjects.length;
       const completedAppraisals = mockAppraisals.filter(a => a.status === 'Completed').length;
       const avgAppraisalScore = mockAppraisals.length > 0 
         ? Math.round(mockAppraisals.reduce((sum, a) => sum + a.overallScore, 0) / mockAppraisals.length)
         : 0;
       const highRiskProjects = mockAppraisals.filter(a => a.riskLevel === 'High').length;
       const convergenceOpportunities = mockAppraisals.reduce((sum, a) => sum + a.convergenceOpportunities.length, 0);
-      const approvedProjects = safeProjects.filter((p: Project) => p.approvals?.paccApprovalStatus === 'Approved').length;
-      const rejectedProjects = safeProjects.filter((p: Project) => p.approvals?.paccApprovalStatus === 'Rejected').length;
+      const approvedProjects = safeAllProjects.filter((p: Project) => p.approvals?.paccApprovalStatus === 'Approved').length;
+      const rejectedProjects = safeAllProjects.filter((p: Project) => p.approvals?.paccApprovalStatus === 'Rejected').length;
       
       setStats({
         totalProjects,
@@ -187,19 +214,58 @@ const DistrictPACCDashboard: React.FC = () => {
     }
   };
 
-  const handleApproveProject = (projectId: string) => {
-    console.log(`Approve project ${projectId}`);
-    // Implementation for project approval
+  const handleApproveProject = async (projectId: string) => {
+    try {
+      const decisionData = {
+        decision: 'Approved',
+        comments: 'Project approved after technical evaluation',
+        technicalScore: 85,
+        financialScore: 78,
+        socialScore: 82
+      };
+
+      await projectsApi.makePACCDecision(projectId, decisionData, token || undefined);
+      
+      // Refresh the dashboard data
+      await fetchDashboardData();
+      alert('Project approved successfully and forwarded to state level!');
+    } catch (error) {
+      console.error('Error approving project:', error);
+      alert('Error approving project. Please try again.');
+    }
   };
 
-  const handleRejectProject = (projectId: string) => {
-    console.log(`Reject project ${projectId}`);
-    // Implementation for project rejection
+  const handleRejectProject = async (projectId: string) => {
+    const reason = prompt('Please provide reason for rejection:');
+    if (!reason) return;
+
+    try {
+      const decisionData = {
+        decision: 'Rejected',
+        comments: reason,
+        technicalScore: 45,
+        financialScore: 50,
+        socialScore: 40
+      };
+
+      await projectsApi.makePACCDecision(projectId, decisionData, token || undefined);
+      
+      // Refresh the dashboard data
+      await fetchDashboardData();
+      alert('Project rejected successfully!');
+    } catch (error) {
+      console.error('Error rejecting project:', error);
+      alert('Error rejecting project. Please try again.');
+    }
   };
 
-  const handleSubmitAppraisal = (projectId: string) => {
-    console.log(`Submit appraisal for project ${projectId}`);
-    // Implementation for appraisal submission
+  const handleSubmitAppraisal = async (projectId: string) => {
+    // For now, we'll simulate starting an appraisal process
+    // In a real app, this would open an appraisal form
+    const confirmed = confirm('Start technical appraisal for this project?');
+    if (confirmed) {
+      alert('Appraisal process initiated. Complete the technical evaluation and then approve/reject the project.');
+    }
   };
 
   if (loading) {
@@ -345,22 +411,36 @@ const DistrictPACCDashboard: React.FC = () => {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleSubmitAppraisal(project._id)}
-                        >
-                          <Send className="h-4 w-4 mr-1" />
-                          Start Appraisal
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4 mr-1" />
-                          View Details
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Download className="h-4 w-4 mr-1" />
-                          Download DPR
-                        </Button>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-4 w-4 mr-1" />
+                            View Details
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            <Download className="h-4 w-4 mr-1" />
+                            Download DPR
+                          </Button>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleApproveProject(project._id)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleRejectProject(project._id)}
+                            className="border-red-300 text-red-600 hover:bg-red-50"
+                          >
+                            Reject
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}

@@ -454,6 +454,17 @@ const seedData = async () => {
           implementingAgency: 'Maharashtra Urban Development Agency',
           contractorId: users.find(u => u.email === 'contractor@mahbuild.com')._id.toString(),
           supervisingOfficer: users.find(u => u.email === 'collector@mumbai.gov.in')._id.toString()
+        },
+        approvals: {
+          paccApprovalStatus: 'Approved',
+          paccApprovalDate: new Date('2024-03-15'),
+          approvedBy: users.find(u => u.email === 'pacc@mumbai.gov.in')._id
+        },
+        technicalDetails: {
+          complexity: 'Medium',
+          duration: 19,
+          beneficiaryCount: 750,
+          projectType: 'Road Infrastructure'
         }
       }
     ];

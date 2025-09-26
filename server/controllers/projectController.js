@@ -342,3 +342,229 @@ function canDeleteProject(user, project) {
   return hasProjectAccess(user, project) && 
          ['super_admin', 'central_admin'].includes(user.role);
 }
+
+// @desc    Get projects pending PACC approval
+// @route   GET /api/projects/pending-pacc-approval
+// @access  Private (District PACC Admin only)
+exports.getPendingPACCApprovals = async (req, res) => {
+  try {
+    // Only District PACC Admin can access this
+    if (req.user.role !== 'district_pacc_admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access restricted to District PACC Admins'
+      });
+    }
+
+    const { page = 1, limit = 10 } = req.query;
+    
+    // Filter projects by user's district and pending PACC approval
+    const query = {
+      'location.state': req.user.jurisdiction.state,
+      'location.district': req.user.jurisdiction.district,
+      'approvals.paccApprovalStatus': 'Pending',
+      status: 'Awaiting PACC Approval'
+    };
+
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sort: { 'approvals.submittedForPACCOn': 1 }, // Oldest submissions first
+      populate: [
+        { path: 'createdBy', select: 'name email role' },
+        { path: 'approvals.submittedBy', select: 'name email role' }
+      ]
+    };
+
+    const pendingProjects = await Project.paginate(query, options);
+
+    res.status(200).json({
+      success: true,
+      data: pendingProjects,
+      message: 'Pending PACC approvals retrieved successfully'
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving pending PACC approvals',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Approve or reject project by PACC
+// @route   POST /api/projects/:id/pacc-decision
+// @access  Private (District PACC Admin only)
+exports.makePACCDecision = async (req, res) => {
+  try {
+    // Only District PACC Admin can make decisions
+    if (req.user.role !== 'district_pacc_admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access restricted to District PACC Admins'
+      });
+    }
+
+    const { id } = req.params;
+    const { decision, comments, technicalScore, financialScore, socialScore } = req.body;
+
+    // Validate decision
+    if (!['Approved', 'Rejected'].includes(decision)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Decision must be either "Approved" or "Rejected"'
+      });
+    }
+
+    const project = await Project.findById(id);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found'
+      });
+    }
+
+    // Check if project is in user's jurisdiction
+    if (project.location.state !== req.user.jurisdiction.state || 
+        project.location.district !== req.user.jurisdiction.district) {
+      return res.status(403).json({
+        success: false,
+        message: 'Project is not in your jurisdiction'
+      });
+    }
+
+    // Check if project is pending PACC approval
+    if (project.approvals.paccApprovalStatus !== 'Pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'Project is not pending PACC approval'
+      });
+    }
+
+    // Update project approval status
+    project.approvals.paccApprovalStatus = decision;
+    project.approvals.paccApprovalDate = new Date();
+    project.approvals.approvedBy = req.user._id;
+
+    // Add appraisal scores if provided
+    if (technicalScore || financialScore || socialScore) {
+      project.appraisalScores = {
+        technicalScore: technicalScore || 0,
+        financialScore: financialScore || 0,
+        socialScore: socialScore || 0,
+        overallScore: Math.round(((technicalScore || 0) + (financialScore || 0) + (socialScore || 0)) / 3),
+        appraisedBy: req.user._id,
+        appraisalDate: new Date(),
+        comments: comments || ''
+      };
+    }
+
+    // Update project status based on decision
+    if (decision === 'Approved') {
+      project.status = 'Planned'; // Ready to move to next stage
+      // Trigger state-level approval workflow
+      project.approvals.stateApprovalStatus = 'Pending';
+    } else {
+      project.status = 'On Hold'; // Rejected projects go on hold
+    }
+
+    await project.save();
+
+    // Populate the updated project
+    await project.populate([
+      { path: 'createdBy', select: 'name email role' },
+      { path: 'approvals.submittedBy', select: 'name email role' },
+      { path: 'approvals.approvedBy', select: 'name email role' }
+    ]);
+
+    // If approved, notify state level (in real app, send notifications)
+    if (decision === 'Approved') {
+      console.log(`Project ${project.projectName} approved by PACC and forwarded to state level`);
+    }
+
+    res.status(200).json({
+      success: true,
+      data: project,
+      message: `Project ${decision.toLowerCase()} successfully`
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error making PACC decision',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get PACC appraisal summary for dashboard
+// @route   GET /api/projects/pacc-summary
+// @access  Private (District PACC Admin only)
+exports.getPACCSummary = async (req, res) => {
+  try {
+    if (req.user.role !== 'district_pacc_admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access restricted to District PACC Admins'
+      });
+    }
+
+    const districtFilter = {
+      'location.state': req.user.jurisdiction.state,
+      'location.district': req.user.jurisdiction.district
+    };
+
+    // Get summary statistics
+    const [
+      totalProjects,
+      pendingApprovals,
+      approvedProjects,
+      rejectedProjects,
+      projectsByScheme,
+      recentApprovals
+    ] = await Promise.all([
+      Project.countDocuments(districtFilter),
+      Project.countDocuments({ ...districtFilter, 'approvals.paccApprovalStatus': 'Pending' }),
+      Project.countDocuments({ ...districtFilter, 'approvals.paccApprovalStatus': 'Approved' }),
+      Project.countDocuments({ ...districtFilter, 'approvals.paccApprovalStatus': 'Rejected' }),
+      Project.aggregate([
+        { $match: districtFilter },
+        { $group: { _id: '$schemeType', count: { $sum: 1 } } }
+      ]),
+      Project.find({ ...districtFilter, 'approvals.paccApprovalStatus': { $in: ['Approved', 'Rejected'] } })
+        .sort({ 'approvals.paccApprovalDate': -1 })
+        .limit(10)
+        .populate('createdBy', 'name email')
+        .populate('approvals.approvedBy', 'name email')
+    ]);
+
+    const summary = {
+      statistics: {
+        totalProjects,
+        pendingApprovals,
+        approvedProjects,
+        rejectedProjects,
+        approvalRate: totalProjects > 0 ? Math.round((approvedProjects / (approvedProjects + rejectedProjects)) * 100) : 0
+      },
+      projectsByScheme: projectsByScheme.reduce((acc, item) => {
+        acc[item._id] = item.count;
+        return acc;
+      }, {}),
+      recentApprovals
+    };
+
+    res.status(200).json({
+      success: true,
+      data: summary,
+      message: 'PACC summary retrieved successfully'
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving PACC summary',
+      error: error.message
+    });
+  }
+};

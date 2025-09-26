@@ -1,5 +1,584 @@
 const express = require('express');
 const router = express.Router();
+const { 
+  logout, 
+  getCurrentUser, 
+  updateUserRole,
+  register,
+  login,
+  getDashboardRoute
+} = require('../controllers/authController');
+const { protect } = require('../middlewares/auth');
+const { requireRole, addUserContext } = require('../middlewares/roleAuth');
+
+// Email/Password Auth Routes
+router.post('/register', register);
+router.post('/login', login);
+
+// Get current logged in user
+router.get('/user', protect, addUserContext, getCurrentUser);
+
+// Get user's dashboard route based on role
+router.get('/dashboard-route', protect, getDashboardRoute);
+
+// Update user role (Super Admin only)
+router.put('/role/:userId', protect, requireRole('super_admin'), updateUserRole);
+
+// Role and permission management routes
+router.get('/roles', protect, requireRole(['super_admin']), (req, res) => {
+  const roles = [
+    { value: 'super_admin', label: 'Super Admin', level: 10 },
+    { value: 'central_admin', label: 'Central Admin', level: 9 },
+    { value: 'state_nodal_admin', label: 'State Nodal Admin', level: 8 },
+    { value: 'state_sc_corporation_admin', label: 'State SC Corporation Admin', level: 7 },
+    { value: 'district_collector', label: 'District Collector', level: 6 },
+    { value: 'district_pacc_admin', label: 'District PACC Admin', level: 5 },
+    { value: 'implementing_agency_user', label: 'Implementing Agency User', level: 4 },
+    { value: 'gram_panchayat_user', label: 'Gram Panchayat User', level: 3 },
+    { value: 'contractor_vendor', label: 'Contractor/Vendor', level: 2 },
+    { value: 'auditor_oversight', label: 'Auditor/Oversight', level: 8 },
+    { value: 'technical_support_group', label: 'Technical Support Group', level: 6 }
+  ];
+  
+  res.json({
+    success: true,
+    data: roles
+  });
+});
+
+router.get('/permissions', protect, requireRole(['super_admin', 'central_admin']), (req, res) => {
+  const permissions = [
+    { value: 'read_all_data', label: 'Read All Data' },
+    { value: 'write_all_data', label: 'Write All Data' },
+    { value: 'manage_users', label: 'Manage Users' },
+    { value: 'manage_roles', label: 'Manage Roles' },
+    { value: 'approve_funds', label: 'Approve Funds' },
+    { value: 'view_audit_logs', label: 'View Audit Logs' },
+    { value: 'manage_state_data', label: 'Manage State Data' },
+    { value: 'approve_projects', label: 'Approve Projects' },
+    { value: 'manage_beneficiaries', label: 'Manage Beneficiaries' },
+    { value: 'district_coordination', label: 'District Coordination' },
+    { value: 'project_appraisal', label: 'Project Appraisal' },
+    { value: 'project_management', label: 'Project Management' },
+    { value: 'village_verification', label: 'Village Verification' },
+    { value: 'contractor_updates', label: 'Contractor Updates' },
+    { value: 'audit_access', label: 'Audit Access' },
+    { value: 'system_support', label: 'System Support' }
+  ];
+  
+  res.json({
+    success: true,
+    data: permissions
+  });
+});
+
+// Logout
+router.get('/logout', logout);
+
+module.exports = router;
+const express = require('express');
+const router = express.Router({ mergeParams: true });
+const {
+  getBeneficiariesByProject,
+  getBeneficiaryById,
+  createBeneficiary,
+  updateBeneficiary,
+  verifyBeneficiary,
+  getBeneficiaryStats,
+  deleteBeneficiary
+} = require('../controllers/beneficiaryController');
+const { protect, authorize } = require('../middlewares/auth');
+
+
+// Apply authentication to all routes
+router.use(protect);
+
+// GET /api/projects/:projectId/beneficiaries - Get beneficiaries for project
+router.get('/', getBeneficiariesByProject);
+
+// POST /api/projects/:projectId/beneficiaries - Create new beneficiary
+router.post('/', 
+  roleAuth([
+    'super_admin', 'central_admin', 'state_nodal_admin', 'state_sc_corporation_admin',
+    'district_collector', 'district_pacc_admin', 'gram_panchayat_user'
+  ]),
+  createBeneficiary
+);
+
+// GET /api/projects/:projectId/beneficiaries/stats - Get beneficiary statistics
+router.get('/stats', getBeneficiaryStats);
+
+// GET /api/projects/:projectId/beneficiaries/:beneficiaryId - Get single beneficiary
+router.get('/:beneficiaryId', getBeneficiaryById);
+
+// PUT /api/projects/:projectId/beneficiaries/:beneficiaryId - Update beneficiary
+router.put('/:beneficiaryId', 
+  roleAuth([
+    'super_admin', 'central_admin', 'state_nodal_admin', 'state_sc_corporation_admin',
+    'district_collector', 'district_pacc_admin', 'gram_panchayat_user'
+  ]),
+  updateBeneficiary
+);
+
+// POST /api/projects/:projectId/beneficiaries/:beneficiaryId/verify - Verify beneficiary
+router.post('/:beneficiaryId/verify', 
+  roleAuth([
+    'super_admin', 'central_admin', 'state_nodal_admin', 'state_sc_corporation_admin',
+    'district_collector', 'gram_panchayat_user'
+  ]),
+  verifyBeneficiary
+);
+
+// DELETE /api/projects/:projectId/beneficiaries/:beneficiaryId - Delete beneficiary
+router.delete('/:beneficiaryId', 
+  authorize(),
+  deleteBeneficiary
+);
+
+module.exports = router;
+const express = require('express');
+const router = express.Router();
+const { 
+  getDashboardData, 
+  getDashboardWidgets, 
+  getDashboardNavigation 
+} = require('../controllers/dashboardController');
+const { protect } = require('../middlewares/auth');
+const { addUserContext, requireRole } = require('../middlewares/roleAuth');
+
+// Apply authentication and context to all dashboard routes
+router.use(protect);
+router.use(addUserContext);
+
+// @desc    Get role-specific dashboard data
+// @route   GET /api/dashboard/data
+// @access  Private
+router.get('/data', getDashboardData);
+
+// @desc    Get dashboard widgets based on role
+// @route   GET /api/dashboard/widgets
+// @access  Private
+router.get('/widgets', getDashboardWidgets);
+
+// @desc    Get navigation menu based on role
+// @route   GET /api/dashboard/navigation
+// @access  Private
+router.get('/navigation', getDashboardNavigation);
+
+// Role-specific dashboard routes
+router.get('/super-admin', requireRole('super_admin'), (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      title: 'Super Admin Dashboard',
+      description: 'Complete system control and oversight',
+      features: [
+        'User and Role Management',
+        'System Configuration',
+        'Audit Trail Monitoring',
+        'Cross-State Analytics',
+        'Financial Controls'
+      ]
+    }
+  });
+});
+
+router.get('/central-admin', requireRole('central_admin'), (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      title: 'Central Admin Dashboard',
+      description: 'National level program monitoring and control',
+      features: [
+        'State Performance Analytics',
+        'Fund Disbursal Management',
+        'Compliance Monitoring',
+        'National Reporting'
+      ]
+    }
+  });
+});
+
+router.get('/state-nodal', requireRole('state_nodal_admin'), (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      title: 'State Nodal Admin Dashboard',
+      description: 'State-level program management and coordination',
+      features: [
+        'District Performance Tracking',
+        'Project Approval Workflow',
+        'Beneficiary Management',
+        'State Fund Allocation'
+      ]
+    }
+  });
+});
+
+router.get('/state-sc-corp', requireRole('state_sc_corporation_admin'), (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      title: 'State SC Corporation Dashboard',
+      description: 'SC community focused program management',
+      features: [
+        'Beneficiary Database Management',
+        'Grant Processing',
+        'Community Outreach Tracking',
+        'State-level Reporting'
+      ]
+    }
+  });
+});
+
+router.get('/district-collector', requireRole('district_collector'), (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      title: 'District Collector Dashboard',
+      description: 'District-level coordination and oversight',
+      features: [
+        'Project Coordination',
+        'Inter-department Liaison',
+        'Progress Monitoring',
+        'Resource Allocation'
+      ]
+    }
+  });
+});
+
+router.get('/district-pacc', requireRole('district_pacc_admin'), (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      title: 'District PACC Dashboard',
+      description: 'Project appraisal and technical evaluation',
+      features: [
+        'Project Appraisal Queue',
+        'Technical Evaluation Tools',
+        'Recommendation Workflow',
+        'Approval Documentation'
+      ]
+    }
+  });
+});
+
+router.get('/implementing-agency', requireRole('implementing_agency_user'), (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      title: 'Implementing Agency Dashboard',
+      description: 'Project execution and milestone tracking',
+      features: [
+        'Task Management',
+        'Milestone Tracking',
+        'Document Upload',
+        'Progress Reporting'
+      ]
+    }
+  });
+});
+
+router.get('/gram-panchayat', requireRole('gram_panchayat_user'), (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      title: 'Gram Panchayat Dashboard',
+      description: 'Village-level program implementation',
+      features: [
+        'Beneficiary Verification',
+        'Local Project Tracking',
+        'Community Engagement',
+        'Field Reports'
+      ]
+    }
+  });
+});
+
+router.get('/contractor', requireRole('contractor_vendor'), (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      title: 'Contractor Dashboard',
+      description: 'Contract execution and deliverable management',
+      features: [
+        'Contract Management',
+        'Deliverable Tracking',
+        'Progress Updates',
+        'Payment Status'
+      ]
+    }
+  });
+});
+
+router.get('/auditor', requireRole('auditor_oversight'), (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      title: 'Auditor Dashboard',
+      description: 'Compliance monitoring and audit management',
+      features: [
+        'Audit Trail Access',
+        'Compliance Monitoring',
+        'Report Generation',
+        'Recommendation Tracking'
+      ]
+    }
+  });
+});
+
+router.get('/tech-support', requireRole('technical_support_group'), (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      title: 'Technical Support Dashboard',
+      description: 'System maintenance and user support',
+      features: [
+        'System Health Monitoring',
+        'User Support Queue',
+        'Error Log Analysis',
+        'Performance Metrics'
+      ]
+    }
+  });
+});
+
+module.exports = router;
+const express = require('express');
+const router = express.Router({ mergeParams: true });
+const {
+  getFundsByProject,
+  getFundById,
+  createFundTransaction,
+  updateFundTransaction,
+  approveFundTransaction,
+  getProjectFundSummary,
+  getPendingApprovals
+} = require('../controllers/fundController');
+const { protect, authorize } = require('../middlewares/auth');
+
+
+// Apply authentication to all routes
+router.use(protect);
+
+// GET /api/projects/:projectId/funds - Get fund transactions for project
+router.get('/', 
+  roleAuth([
+    'super_admin', 'central_admin', 'state_nodal_admin', 'state_sc_corporation_admin',
+    'district_collector', 'district_pacc_admin', 'auditor_oversight'
+  ]),
+  getFundsByProject
+);
+
+// POST /api/projects/:projectId/funds - Create new fund transaction
+router.post('/', 
+  roleAuth([
+    'super_admin', 'central_admin', 'state_nodal_admin', 
+    'district_collector', 'district_pacc_admin'
+  ]),
+  createFundTransaction
+);
+
+// GET /api/projects/:projectId/funds/summary - Get project fund summary
+router.get('/summary', 
+  roleAuth([
+    'super_admin', 'central_admin', 'state_nodal_admin', 'state_sc_corporation_admin',
+    'district_collector', 'district_pacc_admin', 'auditor_oversight'
+  ]),
+  getProjectFundSummary
+);
+
+// GET /api/funds/pending-approvals - Get pending approvals for user
+router.get('/pending-approvals', 
+  roleAuth([
+    'super_admin', 'central_admin', 'state_nodal_admin', 'state_sc_corporation_admin',
+    'district_collector', 'district_pacc_admin'
+  ]),
+  getPendingApprovals
+);
+
+// GET /api/projects/:projectId/funds/:fundId - Get single fund transaction
+router.get('/:fundId', 
+  roleAuth([
+    'super_admin', 'central_admin', 'state_nodal_admin', 'state_sc_corporation_admin',
+    'district_collector', 'district_pacc_admin', 'auditor_oversight'
+  ]),
+  getFundById
+);
+
+// PUT /api/projects/:projectId/funds/:fundId - Update fund transaction
+router.put('/:fundId', 
+  roleAuth([
+    'super_admin', 'central_admin', 'state_nodal_admin', 
+    'district_collector', 'district_pacc_admin'
+  ]),
+  updateFundTransaction
+);
+
+// POST /api/projects/:projectId/funds/:fundId/approve - Approve/reject fund transaction
+router.post('/:fundId/approve', 
+  roleAuth([
+    'super_admin', 'central_admin', 'state_nodal_admin', 'state_sc_corporation_admin',
+    'district_collector', 'district_pacc_admin'
+  ]),
+  approveFundTransaction
+);
+
+module.exports = router;
+const express = require('express');
+const router = express.Router({ mergeParams: true }); // mergeParams to get projectId from parent route
+const {
+  getMilestonesByProject,
+  getMilestoneById,
+  createMilestone,
+  updateMilestone,
+  deleteMilestone,
+  verifyMilestone,
+  getMilestoneTimeline,
+  getOverdueMilestones
+} = require('../controllers/milestoneController');
+const { protect, authorize } = require('../middlewares/auth');
+
+// Apply authentication to all routes
+router.use(protect);
+
+// GET /api/projects/:projectId/milestones - Get all milestones for project
+router.get('/', getMilestonesByProject);
+
+// POST /api/projects/:projectId/milestones - Create new milestone
+router.post('/', 
+  authorize(),
+  createMilestone
+);
+
+// GET /api/projects/:projectId/milestones/timeline - Get milestone timeline
+router.get('/timeline', getMilestoneTimeline);
+
+// GET /api/projects/:projectId/milestones/overdue - Get overdue milestones
+router.get('/overdue', getOverdueMilestones);
+
+// GET /api/projects/:projectId/milestones/:milestoneId - Get single milestone
+router.get('/:milestoneId', getMilestoneById);
+
+// PUT /api/projects/:projectId/milestones/:milestoneId - Update milestone
+router.put('/:milestoneId', 
+  authorize(),
+  updateMilestone
+);
+
+// DELETE /api/projects/:projectId/milestones/:milestoneId - Delete milestone
+router.delete('/:milestoneId', 
+  authorize(),
+  deleteMilestone
+);
+
+// POST /api/projects/:projectId/milestones/:milestoneId/verify - Verify milestone completion
+router.post('/:milestoneId/verify', 
+  authorize(),
+  verifyMilestone
+);
+
+module.exports = router;
+const express = require('express');
+const router = express.Router({ mergeParams: true });
+const {
+  getProgressUpdatesByProject,
+  getProgressUpdateById,
+  createProgressUpdate,
+  updateProgressUpdate,
+  deleteProgressUpdate,
+  getProjectProgressSummary,
+  getIssues
+} = require('../controllers/progressController');
+const { protect, authorize } = require('../middlewares/auth');
+
+
+// Apply authentication to all routes
+router.use(protect);
+
+// GET /api/projects/:projectId/progress - Get progress updates for project
+router.get('/', getProgressUpdatesByProject);
+
+// POST /api/projects/:projectId/progress - Create new progress update
+router.post('/', 
+  roleAuth([
+    'super_admin', 'central_admin', 'state_nodal_admin', 'state_sc_corporation_admin',
+    'district_collector', 'district_pacc_admin', 'implementing_agency_user', 
+    'gram_panchayat_user', 'contractor_vendor'
+  ]),
+  createProgressUpdate
+);
+
+// GET /api/projects/:projectId/progress/summary - Get project progress summary
+router.get('/summary', getProjectProgressSummary);
+
+// GET /api/projects/:projectId/progress/issues - Get issues for project
+router.get('/issues', getIssues);
+
+// GET /api/projects/:projectId/progress/:updateId - Get single progress update
+router.get('/:updateId', getProgressUpdateById);
+
+// PUT /api/projects/:projectId/progress/:updateId - Update progress update
+router.put('/:updateId', 
+  roleAuth([
+    'super_admin', 'central_admin', 'state_nodal_admin', 'district_collector',
+    'implementing_agency_user', 'gram_panchayat_user', 'contractor_vendor'
+  ]),
+  updateProgressUpdate
+);
+
+// DELETE /api/projects/:projectId/progress/:updateId - Delete progress update
+router.delete('/:updateId', 
+  authorize(),
+  deleteProgressUpdate
+);
+
+module.exports = router;
+const express = require('express');
+const router = express.Router();
+const {
+  getAllProjects,
+  getProjectById,
+  createProject,
+  updateProject,
+  deleteProject,
+  getProjectDashboard
+} = require('../controllers/projectController');
+const { protect, authorize } = require('../middlewares/auth');
+
+// Apply authentication to all routes
+router.use(protect);
+
+// GET /api/projects - Get all projects with filtering
+router.get('/', getAllProjects);
+
+// POST /api/projects - Create new project
+router.post('/', 
+  authorize('super_admin', 'central_admin', 'state_nodal_admin', 'district_collector', 'district_pacc_admin'),
+  createProject
+);
+
+// GET /api/projects/:projectId - Get single project
+router.get('/:projectId', getProjectById);
+
+// PUT /api/projects/:projectId - Update project
+router.put('/:projectId', 
+  authorize('super_admin', 'central_admin', 'state_nodal_admin', 'district_collector'),
+  updateProject
+);
+
+// DELETE /api/projects/:projectId - Delete project
+router.delete('/:projectId', 
+  authorize('super_admin', 'central_admin'),
+  deleteProject
+);
+
+// GET /api/projects/:projectId/dashboard - Get project dashboard data
+router.get('/:projectId/dashboard', getProjectDashboard);
+
+module.exports = router;
+const express = require('express');
+const router = express.Router();
 const { getAllUsers, getUserById, deleteUser, createUser, updateUser } = require('../controllers/userController');
 const { protect } = require('../middlewares/auth');
 const { 

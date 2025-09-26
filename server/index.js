@@ -47,6 +47,8 @@ app.use('/api/dashboard', dashboardRoutes);
 
 // PM-AJAY Project Management API routes
 app.use('/api/projects', projectRoutes);
+
+// Nested routes for project resources
 app.use('/api/projects/:projectId/milestones', milestoneRoutes);
 app.use('/api/projects/:projectId/progress', progressRoutes);
 app.use('/api/projects/:projectId/funds', fundRoutes);

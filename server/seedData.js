@@ -39,58 +39,66 @@ const seedData = async () => {
       {
         name: 'Super Admin',
         email: 'super.admin@pmajay.gov.in',
-        password: await bcrypt.hash('123123', 10),
+        password: 'password123',
         role: 'super_admin',
-        jurisdiction: { state: 'All', district: 'All' }
+        jurisdiction: { state: 'All', district: 'All' },
+        isEmailVerified: true
       },
       {
         name: 'Central Admin',
         email: 'central.admin@pmajay.gov.in',
-        password: await bcrypt.hash('123123', 10),
+        password: 'password123',
         role: 'central_admin',
-        jurisdiction: { state: 'All', district: 'All' }
+        jurisdiction: { state: 'All', district: 'All' },
+        isEmailVerified: true
       },
       {
         name: 'State Nodal Officer',
         email: 'state.nodal@gujarat.gov.in',
-        password: await bcrypt.hash('123123', 10),
+        password: 'password123',
         role: 'state_nodal_admin',
-        jurisdiction: { state: 'Gujarat', district: 'All' }
+        jurisdiction: { state: 'Gujarat', district: 'All' },
+        isEmailVerified: true
       },
       {
         name: 'District Collector',
         email: 'collector@ahmedabad.gov.in',
-        password: await bcrypt.hash('123123', 10),
+        password: 'password123',
         role: 'district_collector',
-        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad' }
+        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad' },
+        isEmailVerified: true
       },
       {
         name: 'PACC Admin',
         email: 'pacc@ahmedabad.gov.in',
-        password: await bcrypt.hash('123123', 10),
+        password: 'password123',
         role: 'district_pacc_admin',
-        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad' }
+        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad' },
+        isEmailVerified: true
       },
       {
         name: 'Gram Panchayat Officer',
         email: 'gp@sarkhej.gov.in',
-        password: await bcrypt.hash('123123', 10),
+        password: 'password123',
         role: 'gram_panchayat_user',
-        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad', village: 'Sarkhej' }
+        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad', village: 'Sarkhej' },
+        isEmailVerified: true
       },
       {
         name: 'Implementing Agency',
         email: 'agency@impl.com',
-        password: await bcrypt.hash('123123', 10),
+        password: 'password123',
         role: 'implementing_agency_user',
-        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad' }
+        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad' },
+        isEmailVerified: true
       },
       {
         name: 'Construction Contractor',
         email: 'contractor@build.com',
-        password: await bcrypt.hash('123123', 10),
+        password: '123123',
         role: 'contractor_vendor',
-        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad' }
+        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad' },
+        isEmailVerified: true
       }
     ]);
     
@@ -478,7 +486,7 @@ const seedData = async () => {
 - Beneficiaries: ${beneficiaries.length}
 - Fund Records: ${fundRecords.length}
 
-🔐 Login Credentials (all passwords: 123123):
+🔐 Login Credentials (all passwords: password123):
 - Super Admin: super.admin@pmajay.gov.in
 - Central Admin: central.admin@pmajay.gov.in
 - State Nodal: state.nodal@gujarat.gov.in

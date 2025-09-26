@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Menu, X, ExternalLink, Link } from "lucide-react";
+import { Menu, X, ExternalLink, Link, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import govtEmblem from "@/assets/govt-emblem.png";
 import azadi75Logo from "@/assets/azadi75-logo.png";
 import pmAjayLogo from "@/assets/pm-ajay logo.png";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   const navItems = [
     { name: "Home", href: "#home" },
@@ -15,6 +17,14 @@ const Header = () => {
     { name: "Progress", href: "#progress" },
     { name: "Contact", href: "#contact" },
   ];
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   return (
     <>
@@ -83,14 +93,42 @@ const Header = () => {
               </a>
             </div>
 
-            {/* Login Button and Mobile Menu Toggle */}
+            {/* User Actions */}
             <div className="flex items-center space-x-4">
-              <Button 
-                asChild
-                className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-2 rounded-md shadow-md transition-all duration-200 hover:shadow-lg"
-              >
-                <a href="/login">Login</a>
-              </Button>
+              {user ? (
+                <div className="flex items-center space-x-4">
+                  <div className="hidden md:flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-md">
+                    <User className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-900">{user.name}</span>
+                    <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                      {user.role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  </div>
+                  <Button 
+                    asChild
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md shadow-md transition-all duration-200 hover:shadow-lg"
+                  >
+                    <a href="/dashboard">Dashboard</a>
+                  </Button>
+                  <Button 
+                    onClick={handleLogout}
+                    variant="outline"
+                    className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 font-semibold px-4 py-2 rounded-md transition-all duration-200"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Button 
+                    asChild
+                    className="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-2 rounded-md shadow-md transition-all duration-200 hover:shadow-lg"
+                  >
+                    <a href="/login">Login</a>
+                  </Button>
+                </div>
+              )}
               
               {/* Mobile Menu Button */}
               <button
@@ -111,6 +149,17 @@ const Header = () => {
           {isMenuOpen && (
             <div className="md:hidden border-t border-gray-200 bg-white">
               <div className="px-2 pt-2 pb-3 space-y-1 shadow-lg">
+                {user && (
+                  <div className="px-3 py-2 mb-2 bg-blue-50 rounded-md border-l-4 border-blue-600">
+                    <div className="flex items-center space-x-2">
+                      <User className="w-4 h-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-900">{user.name}</span>
+                    </div>
+                    <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full inline-block mt-1">
+                      {user.role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  </div>
+                )}
                 <a
                   href="/"
                   className="text-blue-900 block px-3 py-2 rounded-md text-base font-semibold bg-blue-50 border-l-4 border-blue-900"
@@ -129,6 +178,23 @@ const Header = () => {
                 >
                   Contact Us
                 </a>
+                {user && (
+                  <>
+                    <a
+                      href="/dashboard"
+                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+                    >
+                      Dashboard
+                    </a>
+                    <button
+                      onClick={handleLogout}
+                      className="text-red-600 hover:text-red-800 hover:bg-red-50 block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+                    >
+                      <LogOut className="w-4 h-4 inline mr-2" />
+                      Logout
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}

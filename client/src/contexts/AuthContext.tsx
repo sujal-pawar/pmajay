@@ -100,6 +100,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, password: string): Promise<void> => {
     try {
+      console.log('AuthContext: Attempting login for:', email);
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -109,16 +110,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       const data = await response.json();
+      console.log('AuthContext: Login response:', data);
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
 
+      console.log('AuthContext: Setting user data:', data.data.user);
       setUser(data.data.user);
       setToken(data.token);
       setDashboardRoute(data.dashboardRoute);
       localStorage.setItem('token', data.token);
     } catch (error) {
+      console.error('AuthContext: Login error:', error);
       throw error;
     }
   };

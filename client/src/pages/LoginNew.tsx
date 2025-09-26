@@ -31,12 +31,15 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      console.log('Attempting login with:', formData.email);
       await login(formData.email, formData.password);
+      console.log('Login successful, navigating to dashboard');
       toast({
         title: "Login Successful",
         description: "Welcome to PM-AJAY Dashboard",
       });
-      // Navigation will be handled by the AuthProvider and routing
+      // Navigate to dashboard after successful login
+      navigate('/dashboard');
     } catch (error: any) {
       toast({
         title: "Login Failed",
@@ -132,6 +135,23 @@ const Login = () => {
               <p className="text-center text-blue-100">
                 Access your role-based dashboard
               </p>
+              
+              {/* Demo Credentials Section */}
+              <div className="mt-4 p-3 bg-blue-800/50 rounded-lg border border-blue-400/30">
+                <h4 className="text-sm font-semibold text-white mb-2">Available Demo Accounts:</h4>
+                <div className="text-xs text-blue-100 space-y-1">
+                  <p><strong>Email Format:</strong> [role]@gmail.com</p>
+                  <p><strong>Password:</strong> 123123 (for all roles)</p>
+                  <p className="text-blue-200">Examples:</p>
+                  <ul className="ml-2 space-y-0.5 text-blue-200">
+                    <li>• super_admin@gmail.com</li>
+                    <li>• central_admin@gmail.com</li>
+                    <li>• state_nodal_admin@gmail.com</li>
+                    <li>• district_collector@gmail.com</li>
+                    <li>• gram_panchayat_user@gmail.com</li>
+                  </ul>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -189,17 +209,7 @@ const Login = () => {
                   )}
                 </Button>
 
-                <div className="text-center pt-4">
-                  <p className="text-blue-100 text-sm">
-                    Don't have an account?{" "}
-                    <Link 
-                      to="/register" 
-                      className="text-white font-medium hover:underline"
-                    >
-                      Register here
-                    </Link>
-                  </p>
-                </div>
+
               </form>
             </CardContent>
           </Card>

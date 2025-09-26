@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, MapPin, Building } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import pmModiPortrait from "@/assets/pm-modi-portrait.jpg";
 import ruralDevelopment from "@/assets/rural-development.jpg";
 
 const Hero = () => {
+  const { user } = useAuth();
+
   return (
     <section id="home" className="relative bg-gradient-subtle py-16 lg:py-24 overflow-hidden">
       {/* Background Pattern */}
@@ -65,10 +68,21 @@ const Hero = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-gradient-govt hover:opacity-90 shadow-govt">
-                Explore Agency Mapping
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
+              {user ? (
+                <Button asChild size="lg" className="bg-gradient-govt hover:opacity-90 shadow-govt">
+                  <a href="/dashboard">
+                    Go to Dashboard
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </a>
+                </Button>
+              ) : (
+                <Button asChild size="lg" className="bg-gradient-govt hover:opacity-90 shadow-govt">
+                  <a href="/login">
+                    Login to Access Dashboard
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </a>
+                </Button>
+              )}
               
               <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/5">
                 View Progress Dashboard

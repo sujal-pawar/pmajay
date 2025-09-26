@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const projectSchema = new mongoose.Schema(
   {
@@ -140,6 +141,9 @@ projectSchema.methods.getDaysRemaining = function() {
   const timeDiff = endDate.getTime() - today.getTime();
   return Math.ceil(timeDiff / (1000 * 3600 * 24));
 };
+
+// Add pagination plugin
+projectSchema.plugin(mongoosePaginate);
 
 const Project = mongoose.model('Project', projectSchema);
 

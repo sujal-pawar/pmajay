@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const fundManagementSchema = new mongoose.Schema(
   {
@@ -149,6 +150,9 @@ fundManagementSchema.methods.requiresApproval = function() {
   const highValueThreshold = 100000; // ₹1 Lakh
   return this.amount >= highValueThreshold;
 };
+
+// Add pagination plugin
+fundManagementSchema.plugin(mongoosePaginate);
 
 const FundManagement = mongoose.model('FundManagement', fundManagementSchema);
 

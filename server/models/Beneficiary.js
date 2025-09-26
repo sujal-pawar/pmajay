@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const beneficiarySchema = new mongoose.Schema(
   {
@@ -129,6 +130,9 @@ beneficiarySchema.methods.checkEligibility = function() {
   // Add custom eligibility logic here
   return this.verificationStatus === 'Verified';
 };
+
+// Add pagination plugin
+beneficiarySchema.plugin(mongoosePaginate);
 
 const Beneficiary = mongoose.model('Beneficiary', beneficiarySchema);
 

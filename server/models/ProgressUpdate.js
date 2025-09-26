@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const progressUpdateSchema = new mongoose.Schema(
   {
@@ -132,6 +133,9 @@ progressUpdateSchema.methods.calculateCostEfficiency = function() {
       : 0
   };
 };
+
+// Add pagination plugin
+progressUpdateSchema.plugin(mongoosePaginate);
 
 const ProgressUpdate = mongoose.model('ProgressUpdate', progressUpdateSchema);
 

@@ -34,16 +34,28 @@ const CentralDashboard: React.FC<CentralDashboardProps> = ({ className }) => {
       setError(null);
       
       // Fetch all projects with pagination
+      console.log('Fetching projects with token:', token ? 'Present' : 'Missing');
       const response = await projectsApi.getAll({ limit: 50 }, token || undefined);
+      console.log('Full API response:', response);
       
-      // Handle different response formats
+      // Handle paginated response format from mongoose-paginate
       let projectData: any[] = [];
-      if (response && Array.isArray(response.data)) {
-        projectData = response.data;
+      if (response && response.success && response.data) {
+        console.log('Response data structure:', response.data);
+        // response.data is from mongoose-paginate which has structure: { docs, totalDocs, limit, totalPages, page, ... }
+        if (response.data.docs && Array.isArray(response.data.docs)) {
+          projectData = response.data.docs;
+          console.log('Using docs array, found', projectData.length, 'projects');
+        } else if (Array.isArray(response.data)) {
+          projectData = response.data;
+          console.log('Using data array directly, found', projectData.length, 'projects');
+        } else {
+          console.warn('Unexpected data structure in response.data:', response.data);
+          projectData = [];
+        }
       } else if (response && Array.isArray(response)) {
         projectData = response;
-      } else if (response && (response as any).projects && Array.isArray((response as any).projects)) {
-        projectData = (response as any).projects;
+        console.log('Using response array directly, found', projectData.length, 'projects');
       } else {
         console.warn('Unexpected response format:', response);
         projectData = [];

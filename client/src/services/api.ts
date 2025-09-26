@@ -189,7 +189,7 @@ export const projectsApi = {
     district?: string;
     priority?: string;
     search?: string;
-  }, token?: string): Promise<{ data: Project[]; pagination: any }> {
+  }, token?: string): Promise<{ success: boolean; data: any; message: string }> {
     const queryParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {

@@ -1,4 +1,3 @@
-// Load environment variables first
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -20,187 +19,152 @@ const connectDB = require('./config/db');
 const seedData = async () => {
   try {
     console.log('🌱 Starting data seeding...');
-    
-    // Connect to database
+
     await connectDB();
-    
-    // Clear existing data
     await User.deleteMany({});
     await Project.deleteMany({});
     await Milestone.deleteMany({});
     await ProgressUpdate.deleteMany({});
     await Beneficiary.deleteMany({});
     await FundManagement.deleteMany({});
-    
     console.log('🗑️  Cleared existing data');
-    
-    // Create sample users for each role
-    const users = await User.create([
+
+    // --- USERS (Maharashtra only) ---
+    const userData = [
       {
         name: 'Super Admin',
         email: 'super.admin@pmajay.gov.in',
-        password: 'password123',
+        password: '123123',
         role: 'super_admin',
         jurisdiction: { state: 'All', district: 'All' },
-        isEmailVerified: true
+        isEmailVerified: true,
       },
       {
         name: 'Central Admin',
         email: 'central.admin@pmajay.gov.in',
-        password: 'password123',
+        password: '123123',
         role: 'central_admin',
         jurisdiction: { state: 'All', district: 'All' },
-        isEmailVerified: true
+        isEmailVerified: true,
       },
       {
-        name: 'State Nodal Officer',
-        email: 'state.nodal@gujarat.gov.in',
-        password: 'password123',
+        name: 'State Nodal Officer (Maharashtra)',
+        email: 'state.nodal@maharashtra.gov.in',
+        password: '123123',
         role: 'state_nodal_admin',
-        jurisdiction: { state: 'Gujarat', district: 'All' },
-        isEmailVerified: true
+        jurisdiction: { state: 'Maharashtra', district: 'All' },
+        isEmailVerified: true,
       },
       {
-        name: 'District Collector',
-        email: 'collector@ahmedabad.gov.in',
-        password: 'password123',
+        name: 'District Collector (Mumbai)',
+        email: 'collector@mumbai.gov.in',
+        password: '123123',
         role: 'district_collector',
-        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad' },
-        isEmailVerified: true
+        jurisdiction: { state: 'Maharashtra', district: 'Mumbai' },
+        isEmailVerified: true,
       },
       {
-        name: 'PACC Admin',
-        email: 'pacc@ahmedabad.gov.in',
-        password: 'password123',
-        role: 'district_pacc_admin',
-        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad' },
-        isEmailVerified: true
-      },
-      {
-        name: 'Gram Panchayat Officer',
-        email: 'gp@sarkhej.gov.in',
-        password: 'password123',
+        name: 'Gram Panchayat Officer (Govandi)',
+        email: 'gp@govandi.gov.in',
+        password: '123123',
         role: 'gram_panchayat_user',
-        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad', village: 'Sarkhej' },
-        isEmailVerified: true
+        jurisdiction: { state: 'Maharashtra', district: 'Mumbai', village: 'Govandi' },
+        isEmailVerified: true,
       },
       {
-        name: 'Implementing Agency',
-        email: 'agency@impl.com',
-        password: 'password123',
+        name: 'Implementing Agency (Maharashtra)',
+        email: 'agency@mahimpl.com',
+        password: '123123',
         role: 'implementing_agency_user',
-        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad' },
-        isEmailVerified: true
+        jurisdiction: { state: 'Maharashtra', district: 'Mumbai' },
+        isEmailVerified: true,
       },
       {
-        name: 'Construction Contractor',
-        email: 'contractor@build.com',
+        name: 'Construction Contractor (Maharashtra)',
+        email: 'contractor@mahbuild.com',
         password: '123123',
         role: 'contractor_vendor',
-        jurisdiction: { state: 'Gujarat', district: 'Ahmedabad' },
-        isEmailVerified: true
+        jurisdiction: { state: 'Maharashtra', district: 'Mumbai' },
+        isEmailVerified: true,
       }
-    ]);
-    
+    ];
+
+    const users = await User.create(userData);
     console.log('👥 Created sample users');
-    
-    // Create sample projects
-    const projects = await Project.create([
+
+    // --- PROJECTS (Maharashtra only) ---
+    const projectData = [
       {
-        projectId: 'PMAJAY-GUJ-AHM-001',
+        projectId: 'PMAJAY-MAH-MUM-001',
         schemeType: 'Adarsh Gram',
-        projectName: 'Sarkhej Village Development',
-        projectDescription: 'Comprehensive development of Sarkhej village including infrastructure, education, and healthcare facilities.',
-        createdBy: users.find(u => u.role === 'state_nodal_admin')._id,
+        projectName: 'Govandi Slum Rehabilitation',
+        projectDescription: 'Upgrading slum infrastructure, housing, and sanitation facilities in Govandi, Mumbai.',
+        createdBy: users.find(u => u.email === 'state.nodal@maharashtra.gov.in')._id,
         location: {
-          state: 'Gujarat',
-          district: 'Ahmedabad',
-          block: 'Sanand',
-          village: 'Sarkhej',
-          coordinates: { latitude: 23.0225, longitude: 72.5714 }
-        },
-        financials: {
-          estimatedCost: 5000000,
-          sanctionedAmount: 4500000,
-          totalReleased: 2250000,
-          totalUtilized: 1800000
-        },
-        timeline: {
-          startDate: new Date('2024-01-15'),
-          scheduledEndDate: new Date('2025-12-31')
-        },
-        status: 'In Progress',
-        priority: 'High',
-        assignedAgencies: {
-          implementingAgency: 'Gujarat Rural Development Agency',
-          contractorId: users.find(u => u.role === 'contractor_vendor')._id.toString(),
-          supervisingOfficer: users.find(u => u.role === 'district_collector')._id.toString()
-        }
-      },
-      {
-        projectId: 'PMAJAY-GUJ-AHM-002',
-        schemeType: 'Hostel',
-        projectName: 'SC Girls Hostel Construction',
-        projectDescription: 'Construction of modern hostel facility for SC girl students with 100 bed capacity.',
-        createdBy: users.find(u => u.role === 'state_nodal_admin')._id,
-        location: {
-          state: 'Gujarat',
-          district: 'Ahmedabad',
-          block: 'City',
-          village: 'Maninagar',
-          coordinates: { latitude: 23.0225, longitude: 72.5714 }
-        },
-        financials: {
-          estimatedCost: 8000000,
-          sanctionedAmount: 7500000,
-          totalReleased: 3750000,
-          totalUtilized: 2500000
-        },
-        timeline: {
-          startDate: new Date('2024-03-01'),
-          scheduledEndDate: new Date('2025-08-31')
-        },
-        status: 'In Progress',
-        priority: 'High',
-        assignedAgencies: {
-          implementingAgency: 'Gujarat Education Department',
-          contractorId: users.find(u => u.role === 'contractor_vendor')._id.toString(),
-          supervisingOfficer: users.find(u => u.role === 'district_collector')._id.toString()
-        }
-      },
-      {
-        projectId: 'PMAJAY-GUJ-AHM-003',
-        schemeType: 'Infrastructure',
-        projectName: 'Rural Road Connectivity',
-        projectDescription: 'Construction of all-weather roads connecting remote villages to main highway.',
-        createdBy: users.find(u => u.role === 'state_nodal_admin')._id,
-        location: {
-          state: 'Gujarat',
-          district: 'Ahmedabad',
-          block: 'Dholka',
-          village: 'Multiple Villages'
+          state: 'Maharashtra',
+          district: 'Mumbai',
+          block: 'Kurla',
+          village: 'Govandi',
+          coordinates: { latitude: 19.0651, longitude: 72.8967 }
         },
         financials: {
           estimatedCost: 12000000,
-          sanctionedAmount: 11000000,
-          totalReleased: 5500000,
-          totalUtilized: 4200000
+          sanctionedAmount: 11500000,
+          totalReleased: 6000000,
+          totalUtilized: 4500000
         },
         timeline: {
-          startDate: new Date('2024-02-01'),
-          scheduledEndDate: new Date('2025-10-31')
+          startDate: new Date('2024-02-25'),
+          scheduledEndDate: new Date('2025-12-15')
         },
         status: 'In Progress',
-        priority: 'Medium'
+        priority: 'High',
+        assignedAgencies: {
+          implementingAgency: 'Maharashtra Urban Development Agency',
+          contractorId: users.find(u => u.email === 'contractor@mahbuild.com')._id.toString(),
+          supervisingOfficer: users.find(u => u.email === 'collector@mumbai.gov.in')._id.toString()
+        }
+      },
+      {
+        projectId: 'PMAJAY-MAH-MUM-002',
+        schemeType: 'Infrastructure',
+        projectName: 'Mumbai Road Upgradation',
+        projectDescription: 'Improvement of roads connecting slums and city center in Mumbai.',
+        createdBy: users.find(u => u.email === 'state.nodal@maharashtra.gov.in')._id,
+        location: {
+          state: 'Maharashtra',
+          district: 'Mumbai',
+          block: 'Kurla',
+          village: 'Govandi',
+          coordinates: { latitude: 19.0575, longitude: 72.8994 }
+        },
+        financials: {
+          estimatedCost: 9000000,
+          sanctionedAmount: 8500000,
+          totalReleased: 4250000,
+          totalUtilized: 3200000
+        },
+        timeline: {
+          startDate: new Date('2024-04-01'),
+          scheduledEndDate: new Date('2025-11-01')
+        },
+        status: 'In Progress',
+        priority: 'Medium',
+        assignedAgencies: {
+          implementingAgency: 'Maharashtra Urban Development Agency',
+          contractorId: users.find(u => u.email === 'contractor@mahbuild.com')._id.toString(),
+          supervisingOfficer: users.find(u => u.email === 'collector@mumbai.gov.in')._id.toString()
+        }
       }
-    ]);
-    
+    ];
+
+    const projects = await Project.create(projectData);
     console.log('🏗️  Created sample projects');
-    
-    // Create milestones for each project
+
+    // --- MILESTONES ---
     const milestones = [];
     for (const project of projects) {
-      const projectMilestones = [
+      const milestonesArr = [
         {
           milestoneId: `${project.projectId}-M001`,
           projectId: project._id,
@@ -212,7 +176,7 @@ const seedData = async () => {
           actualCompletionDate: new Date(project.timeline.startDate.getTime() + 25 * 24 * 60 * 60 * 1000),
           completionPercentage: 100,
           verificationStatus: 'Verified',
-          verifiedBy: users.find(u => u.role === 'gram_panchayat_user')._id
+          verifiedBy: users.find(u => u.email === 'gp@govandi.gov.in')._id
         },
         {
           milestoneId: `${project.projectId}-M002`,
@@ -248,21 +212,20 @@ const seedData = async () => {
           verificationStatus: 'Not Required'
         }
       ];
-      milestones.push(...projectMilestones);
+      milestones.push(...milestonesArr);
     }
-    
     await Milestone.create(milestones);
     console.log('🎯 Created sample milestones');
-    
-    // Create progress updates
+
+    // --- PROGRESS UPDATES ---
     const progressUpdates = [];
     for (const project of projects) {
-      const updates = [
+      const updatesArr = [
         {
           updateId: `${project.projectId}-U001`,
           projectId: project._id,
           updateDate: new Date(),
-          updatedBy: users.find(u => u.role === 'implementing_agency_user')._id,
+          updatedBy: users.find(u => u.email === 'agency@mahimpl.com')._id,
           updateType: 'Progress',
           workCompleted: {
             description: 'Foundation work completed with concrete pouring. Site preparation and excavation finished.',
@@ -296,7 +259,7 @@ const seedData = async () => {
           updateId: `${project.projectId}-U002`,
           projectId: project._id,
           updateDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
-          updatedBy: users.find(u => u.role === 'contractor_vendor')._id,
+          updatedBy: users.find(u => u.email === 'contractor@mahbuild.com')._id,
           updateType: 'Completion',
           workCompleted: {
             description: 'Initial survey and site preparation completed successfully.',
@@ -311,128 +274,122 @@ const seedData = async () => {
           }
         }
       ];
-      progressUpdates.push(...updates);
+      progressUpdates.push(...updatesArr);
     }
-    
     await ProgressUpdate.create(progressUpdates);
     console.log('📈 Created sample progress updates');
-    
-    // Create beneficiaries
-    const beneficiaryData = [
-      {
-        name: 'Priya Patel',
-        aadhaarNumber: '123456789012',
-        category: 'SC',
-        gender: 'Female',
-        age: 29,
-        contactNumber: '9876543210',
-        address: 'Main Road, Sarkhej, Ahmedabad, Gujarat - 380055',
-        annualIncome: 180000,
-        occupation: 'Student',
-        eligibilityStatus: 'Verified'
-      },
-      {
-        name: 'Rajesh Kumar',
-        aadhaarNumber: '123456789014',
-        category: 'SC',
-        gender: 'Male',
-        age: 32,
-        contactNumber: '9876543211',
-        address: 'Village Road, Sarkhej, Ahmedabad, Gujarat - 380055',
-        annualIncome: 220000,
-        occupation: 'Laborer',
-        eligibilityStatus: 'Pending'
-      },
-      {
-        name: 'Sunita Sharma',
-        aadhaarNumber: '123456789015',
-        category: 'SC',
-        gender: 'Female',
-        age: 25,
-        contactNumber: '9876543212',
-        address: 'New Colony, Maninagar, Ahmedabad, Gujarat - 380028',
-        annualIncome: 150000,
-        occupation: 'Housewife',
-        eligibilityStatus: 'Verified'
-      },
-      {
-        name: 'Mukesh Patel',
-        aadhaarNumber: '123456789016',
-        category: 'SC',
-        gender: 'Male',
-        age: 35,
-        contactNumber: '9876543213',
-        address: 'Station Road, Dholka, Ahmedabad, Gujarat - 380060',
-        annualIncome: 280000,
-        occupation: 'Daily Wage Worker',
-        eligibilityStatus: 'Pending'
-      }
-    ];
+
+    // --- BENEFICIARIES ---
+    const maharashtraBeneficiaryData = [
+  {
+    name: 'Sarla More',
+    aadhaarNumber: '987654321012',
+    category: 'SC',
+    gender: 'Female',
+    age: 34,
+    contactNumber: '7896541230',
+    address: 'Slum Area, Govandi, Mumbai, Maharashtra - 400043',
+    annualIncome: 145000,
+    occupation: 'Hawker',
+    eligibilityStatus: 'Verified'
+  },
+  {
+    name: 'Ravi Shinde',
+    aadhaarNumber: '987654321013',
+    category: 'SC',
+    gender: 'Male',
+    age: 37,
+    contactNumber: '7896541231',
+    address: 'Govandi, Mumbai, Maharashtra - 400043',
+    annualIncome: 155000,
+    occupation: 'Daily Wage Worker',
+    eligibilityStatus: 'Pending'
+  },
+  {
+    name: 'Aarti Pawar',
+    aadhaarNumber: '987654321014',
+    category: 'SC',
+    gender: 'Female',
+    age: 28,
+    contactNumber: '7896541232',
+    address: 'Shivaji Nagar, Govandi, Mumbai, Maharashtra - 400043',
+    annualIncome: 130000,
+    occupation: 'Tailor',
+    eligibilityStatus: 'Verified'
+  },
+  {
+    name: 'Sunil Kadam',
+    aadhaarNumber: '987654321015',
+    category: 'SC',
+    gender: 'Male',
+    age: 41,
+    contactNumber: '7896541233',
+    address: 'Baiganwadi, Govandi, Mumbai, Maharashtra - 400043',
+    annualIncome: 160000,
+    occupation: 'Driver',
+    eligibilityStatus: 'Pending'
+  }
+];
+
 
     const beneficiaries = [];
-    let beneficiaryIndex = 0;
-    
-    for (const project of projects.slice(0, 2)) { // Only for first 2 projects
-      const projectBeneficiaries = [
-        {
-          beneficiaryId: `${project.projectId}-B001`,
-          projectId: project._id,
-          personalInfo: {
-            name: beneficiaryData[beneficiaryIndex].name,
-            aadhaarNumber: beneficiaryData[beneficiaryIndex].aadhaarNumber,
-            category: beneficiaryData[beneficiaryIndex].category,
-            gender: beneficiaryData[beneficiaryIndex].gender,
-            age: beneficiaryData[beneficiaryIndex].age,
-            contactNumber: beneficiaryData[beneficiaryIndex].contactNumber,
-            address: beneficiaryData[beneficiaryIndex].address
-          },
-          economicInfo: {
-            annualIncome: beneficiaryData[beneficiaryIndex].annualIncome,
-            occupation: beneficiaryData[beneficiaryIndex].occupation,
-            bplCardNumber: `BPL${123456789 + beneficiaryIndex}`
-          },
-          bankDetails: {
-            accountNumber: `${12345678901234 + beneficiaryIndex}`,
-            ifscCode: 'SBIN0001234',
-            bankName: 'State Bank of India'
-          },
-          eligibilityStatus: beneficiaryData[beneficiaryIndex].eligibilityStatus,
-          verificationDate: beneficiaryData[beneficiaryIndex].eligibilityStatus === 'Verified' ? new Date() : undefined,
-          verifiedBy: beneficiaryData[beneficiaryIndex].eligibilityStatus === 'Verified' ? users.find(u => u.role === 'gram_panchayat_user')._id : undefined
+    let mahIdx = 0;
+
+    // Maharashtra beneficiaries (first 2 projects)
+    for (const project of projects.slice(0, 2)) {
+      const gramUserId = users.find(u => u.email === 'gp@govandi.gov.in')._id;
+      const data1 = maharashtraBeneficiaryData[mahIdx];
+      const data2 = maharashtraBeneficiaryData[mahIdx + 1];
+      beneficiaries.push({
+        beneficiaryId: `${project.projectId}-B001`,
+        projectId: project._id,
+        personalInfo: { ...data1 },
+        economicInfo: {
+          annualIncome: data1.annualIncome,
+          occupation: data1.occupation,
+          bplCardNumber: `BPL${987654321 + mahIdx}`
         },
-        {
-          beneficiaryId: `${project.projectId}-B002`,
-          projectId: project._id,
-          personalInfo: {
-            name: beneficiaryData[beneficiaryIndex + 1].name,
-            aadhaarNumber: beneficiaryData[beneficiaryIndex + 1].aadhaarNumber,
-            category: beneficiaryData[beneficiaryIndex + 1].category,
-            gender: beneficiaryData[beneficiaryIndex + 1].gender,
-            age: beneficiaryData[beneficiaryIndex + 1].age,
-            contactNumber: beneficiaryData[beneficiaryIndex + 1].contactNumber,
-            address: beneficiaryData[beneficiaryIndex + 1].address
-          },
-          economicInfo: {
-            annualIncome: beneficiaryData[beneficiaryIndex + 1].annualIncome,
-            occupation: beneficiaryData[beneficiaryIndex + 1].occupation,
-            bplCardNumber: `BPL${123456789 + beneficiaryIndex + 1}`
-          },
-          eligibilityStatus: beneficiaryData[beneficiaryIndex + 1].eligibilityStatus,
-          verificationDate: beneficiaryData[beneficiaryIndex + 1].eligibilityStatus === 'Verified' ? new Date() : undefined,
-          verifiedBy: beneficiaryData[beneficiaryIndex + 1].eligibilityStatus === 'Verified' ? users.find(u => u.role === 'gram_panchayat_user')._id : undefined
-        }
-      ];
-      beneficiaries.push(...projectBeneficiaries);
-      beneficiaryIndex += 2;
+        bankDetails: {
+          accountNumber: `${98765432101234 + mahIdx}`,
+          ifscCode: 'SBIN0001234',
+          bankName: 'State Bank of India'
+        },
+        eligibilityStatus: data1.eligibilityStatus,
+        verificationDate: data1.eligibilityStatus === 'Verified' ? new Date() : undefined,
+        verifiedBy: data1.eligibilityStatus === 'Verified' ? gramUserId : undefined
+      });
+      beneficiaries.push({
+        beneficiaryId: `${project.projectId}-B002`,
+        projectId: project._id,
+        personalInfo: { ...data2 },
+        economicInfo: {
+          annualIncome: data2.annualIncome,
+          occupation: data2.occupation,
+          bplCardNumber: `BPL${987654321 + mahIdx + 1}`
+        },
+        bankDetails: {
+          accountNumber: `${98765432101234 + mahIdx + 1}`,
+          ifscCode: 'SBIN0001234',
+          bankName: 'State Bank of India'
+        },
+        eligibilityStatus: data2.eligibilityStatus,
+        verificationDate: data2.eligibilityStatus === 'Verified' ? new Date() : undefined,
+        verifiedBy: data2.eligibilityStatus === 'Verified' ? gramUserId : undefined
+      });
+      mahIdx += 2;
     }
-    
+
     await Beneficiary.create(beneficiaries);
     console.log('👥 Created sample beneficiaries');
-    
-    // Create fund management records
+
+    // --- FUND MANAGEMENT ---
     const fundRecords = [];
     for (const project of projects) {
-      const records = [
+      const stateCorp = 'Maharashtra State SC Corporation';
+      const nodalEmail = 'state.nodal@maharashtra.gov.in';
+      const collectorEmail = 'collector@mumbai.gov.in';
+
+      const recordsArr = [
         {
           transactionId: `${project.projectId}-F001`,
           projectId: project._id,
@@ -440,8 +397,8 @@ const seedData = async () => {
           amount: project.financials.totalReleased / 2,
           transactionDate: new Date(project.timeline.startDate.getTime() + 15 * 24 * 60 * 60 * 1000),
           sourceAgency: 'Ministry of Social Justice & Empowerment',
-          destinationAgency: 'Gujarat State SC Corporation',
-          approvedBy: users.find(u => u.role === 'state_nodal_admin')._id,
+          destinationAgency: stateCorp,
+          approvedBy: users.find(u => u.email === nodalEmail)._id,
           purpose: 'First installment release for project implementation',
           utilizationDetails: {
             category: 'Material',
@@ -460,9 +417,9 @@ const seedData = async () => {
           transactionType: 'Utilization',
           amount: project.financials.totalUtilized,
           transactionDate: new Date(),
-          sourceAgency: 'Gujarat State SC Corporation',
+          sourceAgency: stateCorp,
           destinationAgency: 'District Collector Office',
-          approvedBy: users.find(u => u.role === 'district_collector')._id,
+          approvedBy: users.find(u => u.email === collectorEmail)._id,
           purpose: 'Funds utilized for construction materials and labor',
           utilizationDetails: {
             category: 'Labor',
@@ -470,12 +427,12 @@ const seedData = async () => {
           }
         }
       ];
-      fundRecords.push(...records);
+      fundRecords.push(...recordsArr);
     }
-    
     await FundManagement.create(fundRecords);
     console.log('💰 Created sample fund records');
-    
+
+    // --- SUMMARY OUTPUT ---
     console.log('✅ Data seeding completed successfully!');
     console.log(`
 📊 Summary:
@@ -486,17 +443,15 @@ const seedData = async () => {
 - Beneficiaries: ${beneficiaries.length}
 - Fund Records: ${fundRecords.length}
 
-🔐 Login Credentials (all passwords: password123):
+🔐 Login Credentials (all passwords: 123123):
 - Super Admin: super.admin@pmajay.gov.in
 - Central Admin: central.admin@pmajay.gov.in
-- State Nodal: state.nodal@gujarat.gov.in
-- District Collector: collector@ahmedabad.gov.in
-- PACC Admin: pacc@ahmedabad.gov.in
-- Gram Panchayat: gp@sarkhej.gov.in
-- Implementing Agency: agency@impl.com
-- Contractor: contractor@build.com
+- State Nodal (Maharashtra): state.nodal@maharashtra.gov.in
+- District Collector (Mumbai): collector@mumbai.gov.in
+- Gram Panchayat (Govandi): gp@govandi.gov.in
+- Implementing Agency (Maharashtra): agency@mahimpl.com
+- Contractor (Maharashtra): contractor@mahbuild.com
     `);
-    
   } catch (error) {
     console.error('❌ Error seeding data:', error);
   } finally {
@@ -504,5 +459,4 @@ const seedData = async () => {
   }
 };
 
-// Run the seeder
 seedData();

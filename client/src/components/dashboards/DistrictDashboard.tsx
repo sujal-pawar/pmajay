@@ -30,6 +30,7 @@ const DistrictDashboard: React.FC<DistrictDashboardProps> = ({ className }) => {
   });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -38,6 +39,7 @@ const DistrictDashboard: React.FC<DistrictDashboardProps> = ({ className }) => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       // Fetch projects filtered by district
       const districtFilter = user?.jurisdiction?.district;
@@ -49,7 +51,25 @@ const DistrictDashboard: React.FC<DistrictDashboardProps> = ({ className }) => {
         district: districtFilter 
       }, token || undefined);
       
-      const projectData = response.data || [];
+      // Handle paginated response format from mongoose-paginate
+      let projectData: any[] = [];
+      if (response && response.success && response.data) {
+        // response.data is from mongoose-paginate which has structure: { docs, totalDocs, limit, totalPages, page, ... }
+        if (response.data.docs && Array.isArray(response.data.docs)) {
+          projectData = response.data.docs;
+        } else if (Array.isArray(response.data)) {
+          projectData = response.data;
+        } else {
+          console.warn('Unexpected data structure in response.data:', response.data);
+          projectData = [];
+        }
+      } else if (response && Array.isArray(response)) {
+        projectData = response;
+      } else {
+        console.warn('Unexpected response format:', response);
+        projectData = [];
+      }
+      
       setProjects(projectData);
 
       // Fetch milestones for all projects
@@ -280,7 +300,7 @@ const DistrictDashboard: React.FC<DistrictDashboardProps> = ({ className }) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {Array.from(new Set(projects.map(p => p.location?.block).filter(Boolean))).slice(0, 8).map((block) => {
+                  {Array.isArray(projects) && Array.from(new Set(projects.map(p => p.location?.block).filter(Boolean))).slice(0, 8).map((block) => {
                     const blockProjects = projects.filter(p => p.location?.block === block);
                     const percentage = projects.length > 0 ? (blockProjects.length / projects.length) * 100 : 0;
                     
@@ -355,7 +375,7 @@ const DistrictDashboard: React.FC<DistrictDashboardProps> = ({ className }) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {projects.map((project) => (
+                {Array.isArray(projects) && projects.map((project) => (
                   <div key={project._id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">

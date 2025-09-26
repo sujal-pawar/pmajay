@@ -8,7 +8,7 @@ import govtEmblem from "@/assets/govt-emblem.png";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [captcha, setCaptcha] = useState("ABCD123");
+  const [captcha, setCaptcha] = useState("");
   const [formData, setFormData] = useState({
     userId: "",
     password: "",
@@ -49,7 +49,7 @@ const Login = () => {
             <span className="text-blue-600 font-medium cursor-pointer hover:underline">
               REGISTRATION FORM
             </span>{" "}
-            to email id <strong>pandey[dot]nishant[at]gov[dot]in</strong> to obtain the login details.
+            to email id <strong>Singh[dot]Ramesh[at]gov[dot]in</strong> to obtain the login details.
           </p>
         </div>
 

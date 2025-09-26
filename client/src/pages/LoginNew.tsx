@@ -205,40 +205,132 @@ const Login = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-3">
-                {[
-                  { role: "Super Admin", description: "Complete system administration", email: "super_admin@gmail.com" },
-                  { role: "Central Admin", description: "National-level oversight", email: "central_admin@gmail.com" },
-                  { role: "State Nodal Admin", description: "State-level management", email: "state_nodal_admin@gmail.com" },
-                  { role: "State SC Corporation Admin", description: "SC community programs", email: "state_sc_corporation_admin@gmail.com" },
-                  { role: "State Treasury", description: "Fund management & disbursement", email: "treasury@maharashtra.gov.in" },
-                  { role: "District Collector", description: "District coordination", email: "district_collector@gmail.com" },
-                  { role: "District PACC Admin", description: "Project appraisal", email: "district_pacc_admin@gmail.com" },
-                  { role: "Implementing Agency", description: "Project execution", email: "implementing_agency_user@gmail.com" },
-                  { role: "Gram Panchayat User", description: "Village-level implementation", email: "gram_panchayat_user@gmail.com" },
-                  { role: "Contractor/Vendor", description: "Contract management", email: "contractor_vendor@gmail.com" },
-                  { role: "Auditor/Oversight", description: "Compliance monitoring", email: "auditor_oversight@gmail.com" },
-                  { role: "Technical Support", description: "System maintenance", email: "technical_support_group@gmail.com" }
-                ].map((item, index) => (
-                  <div key={index} className="flex items-start p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-800">{item.role}</span>
-                        <button
-                          onClick={() => {
-                            setFormData({ email: item.email, password: "123123" });
-                          }}
-                          className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
-                        >
-                          Use Demo
-                        </button>
+              {/* Central Level */}
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-blue-900 mb-3 border-b border-blue-200 pb-1">
+                  Central Level
+                </h3>
+                <div className="space-y-2">
+                  {[
+                    { role: "Ministry of Social Justice & Empowerment", description: "Central government oversight", email: "central.admin@pmajay.gov.in" },
+                    { role: "Technical Support Group", description: "Technical assistance & guidance", email: "tech.support@pmajay.gov.in" }
+                  ].map((item, index) => (
+                    <div key={`central-${index}`} className="flex items-start p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-gray-800">{item.role}</span>
+                          <button
+                            onClick={() => {
+                              setFormData({ email: item.email, password: "123123" });
+                            }}
+                            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+                          >
+                            Use Demo
+                          </button>
+                        </div>
+                        <p className="text-sm text-gray-600">{item.description}</p>
+                        <p className="text-xs text-gray-500 mt-1 font-mono">{item.email}</p>
                       </div>
-                      <p className="text-sm text-gray-600">{item.description}</p>
-                      <p className="text-xs text-gray-500 mt-1 font-mono">{item.email}</p>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              {/* State Level */}
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-green-900 mb-3 border-b border-green-200 pb-1">
+                  State Level
+                </h3>
+                <div className="space-y-2">
+                  {[
+                    { role: "State Nodal Agency", description: "State-level program coordination", email: "state.nodal@maharashtra.gov.in" },
+                    { role: "State Treasury", description: "Fund management & disbursement", email: "treasury@maharashtra.gov.in" },
+                    { role: "State SC Corporation", description: "SC community program management", email: "sc.corp@maharashtra.gov.in" }
+                  ].map((item, index) => (
+                    <div key={`state-${index}`} className="flex items-start p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                      <div className="w-2 h-2 bg-green-600 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-gray-800">{item.role}</span>
+                          <button
+                            onClick={() => {
+                              setFormData({ email: item.email, password: "123123" });
+                            }}
+                            className="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 transition-colors"
+                          >
+                            Use Demo
+                          </button>
+                        </div>
+                        <p className="text-sm text-gray-600">{item.description}</p>
+                        <p className="text-xs text-gray-500 mt-1 font-mono">{item.email}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* District Level */}
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-orange-900 mb-3 border-b border-orange-200 pb-1">
+                  District Level
+                </h3>
+                <div className="space-y-2">
+                  {[
+                    { role: "District Collector", description: "District administration & coordination", email: "collector@mumbai.gov.in" },
+                    { role: "District PACC", description: "Project Appraisal & Convergence Committee", email: "pacc@mumbai.gov.in" }
+                  ].map((item, index) => (
+                    <div key={`district-${index}`} className="flex items-start p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
+                      <div className="w-2 h-2 bg-orange-600 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-gray-800">{item.role}</span>
+                          <button
+                            onClick={() => {
+                              setFormData({ email: item.email, password: "123123" });
+                            }}
+                            className="text-xs bg-orange-500 text-white px-2 py-1 rounded hover:bg-orange-600 transition-colors"
+                          >
+                            Use Demo
+                          </button>
+                        </div>
+                        <p className="text-sm text-gray-600">{item.description}</p>
+                        <p className="text-xs text-gray-500 mt-1 font-mono">{item.email}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Local Level */}
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-purple-900 mb-3 border-b border-purple-200 pb-1">
+                  Local Level
+                </h3>
+                <div className="space-y-2">
+                  {[
+                    { role: "Gram Panchayat", description: "Village-level implementation & monitoring", email: "gp@govandi.gov.in" }
+                  ].map((item, index) => (
+                    <div key={`local-${index}`} className="flex items-start p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                      <div className="w-2 h-2 bg-purple-600 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-gray-800">{item.role}</span>
+                          <button
+                            onClick={() => {
+                              setFormData({ email: item.email, password: "123123" });
+                            }}
+                            className="text-xs bg-purple-500 text-white px-2 py-1 rounded hover:bg-purple-600 transition-colors"
+                          >
+                            Use Demo
+                          </button>
+                        </div>
+                        <p className="text-sm text-gray-600">{item.description}</p>
+                        <p className="text-xs text-gray-500 mt-1 font-mono">{item.email}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
               
               <div className="mt-6 p-4 bg-orange-50 rounded-lg border-l-4 border-orange-400">
@@ -264,15 +356,15 @@ const Login = () => {
               <div className="mt-4 p-3 bg-blue-800/50 rounded-lg border border-blue-400/30">
                 <h4 className="text-sm font-semibold text-white mb-2">Available Demo Accounts:</h4>
                 <div className="text-xs text-blue-100 space-y-1">
-                  <p><strong>Email Format:</strong> [role]@gmail.com</p>
                   <p><strong>Password:</strong> 123123 (for all roles)</p>
-                  <p className="text-blue-200">Examples:</p>
+                  <p className="text-blue-200">Sample Logins:</p>
                   <ul className="ml-2 space-y-0.5 text-blue-200">
-                    <li>• super_admin@gmail.com</li>
-                    <li>• central_admin@gmail.com</li>
-                    <li>• state_nodal_admin@gmail.com</li>
-                    <li>• district_collector@gmail.com</li>
-                    <li>• gram_panchayat_user@gmail.com</li>
+                    <li>• central.admin@pmajay.gov.in</li>
+                    <li>• state.nodal@maharashtra.gov.in</li>
+                    <li>• treasury@maharashtra.gov.in</li>
+                    <li>• collector@mumbai.gov.in</li>
+                    <li>• pacc@mumbai.gov.in</li>
+                    <li>• gp@govandi.gov.in</li>
                   </ul>
                 </div>
               </div>

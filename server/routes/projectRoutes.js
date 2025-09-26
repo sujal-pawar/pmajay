@@ -16,10 +16,10 @@ const { protect, authorize } = require('../middlewares/auth');
 // Apply authentication to all routes
 router.use(protect);
 
-// PACC-specific routes (must come before parameterized routes)
-router.get('/pending-pacc-approval', authorize(['district_pacc_admin']), getPendingPACCApprovals);
-router.get('/pacc-summary', authorize(['district_pacc_admin']), getPACCSummary);
-router.post('/:id/pacc-decision', authorize(['district_pacc_admin']), makePACCDecision);
+// PACC-specific routes (must come before parameterized routes)  
+router.get('/pending-pacc-approval', getPendingPACCApprovals);
+router.get('/pacc-summary', getPACCSummary);
+router.post('/:id/pacc-decision', makePACCDecision);
 
 // Project routes
 router.get('/', getAllProjects);

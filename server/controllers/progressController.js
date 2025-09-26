@@ -457,3 +457,224 @@ function canDeleteProgressUpdate(user, progressUpdate) {
   // Only admin roles can delete any progress update
   return ['super_admin', 'central_admin'].includes(user.role);
 }
+
+// @desc    Get all progress updates with role-based filtering
+// @route   GET /api/progress/dashboard
+// @access  Private
+exports.getDashboardProgressUpdates = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, updateType } = req.query;
+    const user = await User.findById(req.user.id);
+    
+    // Build project filter based on user role and jurisdiction
+    const projectQuery = {};
+    
+    if (user.role !== 'super_admin' && user.role !== 'central_admin') {
+      if (user.jurisdiction?.state && user.jurisdiction.state !== 'All') {
+        projectQuery['location.state'] = user.jurisdiction.state;
+      }
+      if (user.jurisdiction?.district && user.jurisdiction.district !== 'All') {
+        projectQuery['location.district'] = user.jurisdiction.district;
+      }
+      if (user.jurisdiction?.village) {
+        projectQuery['location.village'] = user.jurisdiction.village;
+      }
+    }
+    
+    // Get accessible projects
+    const accessibleProjects = await Project.find(projectQuery).select('_id');
+    const projectIds = accessibleProjects.map(p => p._id);
+    
+    // Build progress update query
+    const query = { projectId: { $in: projectIds } };
+    if (status) query.status = status;
+    if (updateType) query.updateType = updateType;
+
+    const options = {
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      populate: [
+        { path: 'projectId', select: 'projectName location status' },
+        { path: 'updatedBy', select: 'name role' },
+        { path: 'milestoneId', select: 'milestoneName category' }
+      ],
+      sort: { updateDate: -1 }
+    };
+
+    const progressUpdates = await ProgressUpdate.paginate(query, options);
+
+    res.status(200).json({
+      success: true,
+      data: progressUpdates
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching progress updates',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Create progress update with automatic fund flow trigger
+// @route   POST /api/progress/create-with-flow
+// @access  Private
+exports.createProgressUpdateWithFlow = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const { projectId, milestoneId, workCompleted, qualityParameters, issues = [] } = req.body;
+
+    // Verify project and milestone
+    const project = await Project.findById(projectId);
+    const milestone = await Milestone.findById(milestoneId);
+    
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found'
+      });
+    }
+
+    if (!milestone) {
+      return res.status(404).json({
+        success: false,
+        message: 'Milestone not found'
+      });
+    }
+
+    // Check permissions
+    if (!canCreateProgressUpdate(user, project)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Insufficient permissions to update this project'
+      });
+    }
+
+    // Create progress update
+    const progressUpdate = await ProgressUpdate.create({
+      updateId: `UPD-${Date.now()}-${require('crypto').randomBytes(4).toString('hex')}`,
+      projectId,
+      milestoneId,
+      updatedBy: user._id,
+      updateDate: new Date(),
+      updateType: 'Progress',
+      workCompleted,
+      qualityParameters,
+      issues: issues.map(issue => ({
+        ...issue,
+        reportedBy: user._id,
+        reportedDate: new Date(),
+        status: 'Open'
+      }))
+    });
+
+    // Check if milestone is completed and trigger fund flow
+    const completionPercentage = workCompleted?.quantitativeMetrics?.percentageCompleted || 0;
+    
+    if (completionPercentage >= 100) {
+      // Update milestone status
+      milestone.status = 'Completed';
+      milestone.actualCompletionDate = new Date();
+      milestone.completionPercentage = 100;
+      await milestone.save();
+
+      // Trigger fund flow if milestone is significant
+      await triggerFundFlow(project, milestone, user);
+      
+      // Update project progress
+      await updateProjectProgress(project);
+    } else if (completionPercentage > (milestone.completionPercentage || 0)) {
+      // Update milestone progress
+      milestone.completionPercentage = completionPercentage;
+      await milestone.save();
+    }
+
+    const populatedUpdate = await ProgressUpdate.findById(progressUpdate._id)
+      .populate('projectId', 'projectName location')
+      .populate('updatedBy', 'name role')
+      .populate('milestoneId', 'milestoneName category');
+
+    res.status(201).json({
+      success: true,
+      data: populatedUpdate,
+      message: 'Progress update created successfully'
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error creating progress update',
+      error: error.message
+    });
+  }
+};
+
+// Helper function to trigger fund flow based on milestone completion
+async function triggerFundFlow(project, milestone, user) {
+  try {
+    const FundManagement = require('../models/FundManagement');
+    
+    // Calculate fund release amount based on milestone
+    const milestoneValue = milestone.financials?.allocatedAmount || 
+                          (project.financials.sanctionedAmount * 0.25); // 25% per major milestone
+    
+    // Create fund release record from State Treasury to Implementing Agency
+    const fundRelease = await FundManagement.create({
+      transactionId: `FR-${Date.now()}-${milestone.milestoneId}`,
+      projectId: project._id,
+      milestoneId: milestone._id,
+      transactionType: 'Release',
+      amount: milestoneValue,
+      transactionDate: new Date(),
+      sourceAgency: 'State Treasury',
+      destinationAgency: project.assignedAgencies?.implementingAgency || 'Implementing Agency',
+      approvedBy: user._id,
+      purpose: `Milestone completion fund release: ${milestone.milestoneName}`,
+      status: 'Pending',
+      utilizationDetails: {
+        category: 'Milestone Payment',
+        description: `Fund release for completed milestone: ${milestone.milestoneName}`
+      },
+      pfmsReferenceNumber: `PFMS-${Date.now()}`,
+      documents: [{
+        type: 'Milestone Completion Certificate',
+        documentNumber: `MCC-${milestone.milestoneId}-${Date.now()}`
+      }]
+    });
+
+    // Update project financials
+    project.financials.totalReleased += milestoneValue;
+    await project.save();
+
+    console.log(`Fund flow triggered: ₹${milestoneValue} for milestone ${milestone.milestoneName}`);
+    
+  } catch (error) {
+    console.error('Error triggering fund flow:', error);
+  }
+}
+
+// Helper function to update overall project progress
+async function updateProjectProgress(project) {
+  try {
+    const milestones = await Milestone.find({ projectId: project._id });
+    const totalMilestones = milestones.length;
+    const completedMilestones = milestones.filter(m => m.status === 'Completed').length;
+    
+    const overallProgress = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0;
+    
+    // Update project status based on progress
+    if (overallProgress === 100) {
+      project.status = 'Completed';
+      project.timeline.actualEndDate = new Date();
+    } else if (overallProgress > 0) {
+      project.status = 'In Progress';
+    }
+    
+    // Store progress percentage (you might want to add this field to the Project model)
+    project.overallProgress = overallProgress;
+    await project.save();
+    
+  } catch (error) {
+    console.error('Error updating project progress:', error);
+  }
+}

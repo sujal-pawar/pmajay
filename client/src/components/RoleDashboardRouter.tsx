@@ -283,6 +283,8 @@ const RoleDashboardRouter: React.FC = () => {
       case 'state_nodal_admin':
       case 'state_sc_corporation_admin':
         return 'State Dashboard';
+      case 'state_treasury':
+        return 'State Treasury Dashboard';
       case 'district_collector':
       case 'district_pacc_admin':
         return 'District Dashboard';

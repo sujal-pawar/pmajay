@@ -84,6 +84,65 @@ exports.getDashboardNavigation = async (req, res) => {
   }
 };
 
+// Helper functions for role-based filtering
+function buildProjectFilter(user) {
+  const filter = {};
+  
+  // Super admin and central admin can see all projects
+  if (['super_admin', 'central_admin'].includes(user.role)) {
+    return filter;
+  }
+  
+  // State level filtering
+  if (user.jurisdiction?.state && user.jurisdiction.state !== 'All') {
+    filter['location.state'] = user.jurisdiction.state;
+  }
+  
+  // District level filtering
+  if (user.jurisdiction?.district && user.jurisdiction.district !== 'All') {
+    filter['location.district'] = user.jurisdiction.district;
+  }
+  
+  // Village level filtering
+  if (user.jurisdiction?.village) {
+    filter['location.village'] = user.jurisdiction.village;
+  }
+  
+  // Agency specific filtering
+  if (user.agency) {
+    filter['assignedAgencies.implementingAgency'] = user.agency;
+  }
+  
+  return filter;
+}
+
+function buildUserFilter(user) {
+  const filter = {};
+  
+  // Super admin can see all users
+  if (user.role === 'super_admin') {
+    return filter;
+  }
+  
+  // Central admin can see all non-super-admin users
+  if (user.role === 'central_admin') {
+    filter.role = { $ne: 'super_admin' };
+    return filter;
+  }
+  
+  // State level users can see users in their jurisdiction
+  if (user.jurisdiction?.state) {
+    filter['jurisdiction.state'] = user.jurisdiction.state;
+  }
+  
+  // District level users can see users in their district
+  if (user.jurisdiction?.district) {
+    filter['jurisdiction.district'] = user.jurisdiction.district;
+  }
+  
+  return filter;
+}
+
 // Generate dashboard data based on user role
 async function generateDashboardData(user) {
   const baseData = {
@@ -151,6 +210,20 @@ async function generateDashboardData(user) {
         },
         beneficiaryBreakdown: await getBeneficiaryBreakdown(user.jurisdiction?.state),
         recentApplications: await getRecentApplications(user.jurisdiction?.state)
+      };
+
+    case 'state_treasury':
+      return {
+        ...baseData,
+        stats: {
+          totalFundsReceived: await getTotalFundsReceived(user.jurisdiction?.state),
+          totalFundsReleased: await getTotalFundsReleased(user.jurisdiction?.state),
+          pendingReleases: await getPendingReleases(user.jurisdiction?.state),
+          pfmsTransactions: await getPFMSTransactions(user.jurisdiction?.state)
+        },
+        fundFlow: await getFundFlowData(user.jurisdiction?.state),
+        transactionHistory: await getTransactionHistory(user.jurisdiction?.state),
+        pendingApprovals: await getPendingFundApprovals(user.jurisdiction?.state)
       };
 
     case 'district_collector':
@@ -398,6 +471,155 @@ async function getSystemUptime() { return '99.9%'; }
 async function getUserSupportRequests() { return 45; }
 async function getSystemErrors() { return 3; }
 async function getSupportQueue() { return []; }
+
+// State Treasury specific functions
+async function getTotalFundsReceived(state) { 
+  const FundManagement = require('../models/FundManagement');
+  try {
+    const result = await FundManagement.aggregate([
+      {
+        $match: {
+          destinationAgency: 'State Treasury',
+          status: 'Completed',
+          ...(state && { 'projectId.location.state': state })
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' }
+        }
+      }
+    ]);
+    return result[0]?.total || 0;
+  } catch (error) {
+    console.error('Error fetching total funds received:', error);
+    return 0;
+  }
+}
+
+async function getTotalFundsReleased(state) {
+  const FundManagement = require('../models/FundManagement');
+  try {
+    const result = await FundManagement.aggregate([
+      {
+        $match: {
+          sourceAgency: 'State Treasury',
+          status: 'Completed',
+          ...(state && { 'projectId.location.state': state })
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' }
+        }
+      }
+    ]);
+    return result[0]?.total || 0;
+  } catch (error) {
+    console.error('Error fetching total funds released:', error);
+    return 0;
+  }
+}
+
+async function getPendingReleases(state) {
+  const FundManagement = require('../models/FundManagement');
+  try {
+    const count = await FundManagement.countDocuments({
+      sourceAgency: 'State Treasury',
+      status: 'Pending',
+      ...(state && { 'projectId.location.state': state })
+    });
+    return count;
+  } catch (error) {
+    console.error('Error fetching pending releases:', error);
+    return 0;
+  }
+}
+
+async function getPFMSTransactions(state) {
+  const FundManagement = require('../models/FundManagement');
+  try {
+    const count = await FundManagement.countDocuments({
+      pfmsReferenceNumber: { $exists: true, $ne: null },
+      ...(state && { 'projectId.location.state': state })
+    });
+    return count;
+  } catch (error) {
+    console.error('Error fetching PFMS transactions:', error);
+    return 0;
+  }
+}
+
+async function getFundFlowData(state) {
+  const FundManagement = require('../models/FundManagement');
+  try {
+    const fundFlow = await FundManagement.aggregate([
+      {
+        $match: {
+          ...(state && { 'projectId.location.state': state })
+        }
+      },
+      {
+        $group: {
+          _id: {
+            month: { $month: '$transactionDate' },
+            year: { $year: '$transactionDate' },
+            type: '$transactionType'
+          },
+          amount: { $sum: '$amount' },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { '_id.year': -1, '_id.month': -1 }
+      },
+      {
+        $limit: 12
+      }
+    ]);
+    return fundFlow;
+  } catch (error) {
+    console.error('Error fetching fund flow data:', error);
+    return [];
+  }
+}
+
+async function getTransactionHistory(state) {
+  const FundManagement = require('../models/FundManagement');
+  try {
+    const transactions = await FundManagement.find({
+      ...(state && { 'projectId.location.state': state })
+    })
+      .populate('projectId', 'projectName projectId')
+      .populate('approvedBy', 'name role')
+      .sort({ transactionDate: -1 })
+      .limit(20);
+    return transactions;
+  } catch (error) {
+    console.error('Error fetching transaction history:', error);
+    return [];
+  }
+}
+
+async function getPendingFundApprovals(state) {
+  const FundManagement = require('../models/FundManagement');
+  try {
+    const pendingApprovals = await FundManagement.find({
+      status: 'Pending',
+      ...(state && { 'projectId.location.state': state })
+    })
+      .populate('projectId', 'projectName projectId location')
+      .populate('milestoneId', 'milestoneName category')
+      .sort({ transactionDate: 1 })
+      .limit(10);
+    return pendingApprovals;
+  } catch (error) {
+    console.error('Error fetching pending fund approvals:', error);
+    return [];
+  }
+}
 
 // Note: Functions are already exported using exports.functionName above
 // No need for additional module.exports since we used exports.* pattern

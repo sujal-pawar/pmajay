@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, LogIn } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, LogIn, Mail, Shield, AlertCircle, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import govtEmblem from "@/assets/govt-emblem.png";
@@ -17,6 +18,11 @@ const Login = () => {
     password: ""
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -24,10 +30,38 @@ const Login = () => {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear errors when user starts typing
+    if (errors[field as keyof typeof errors]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+    
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -37,18 +71,96 @@ const Login = () => {
       toast({
         title: "Login Successful",
         description: "Welcome to PM-AJAY Dashboard",
+        action: (
+          <CheckCircle className="h-4 w-4 text-green-600" />
+        ),
       });
       // Navigate to dashboard after successful login
       navigate('/dashboard');
     } catch (error: any) {
+      const errorMessage = error.message || "Invalid credentials";
       toast({
-        title: "Login Failed",
-        description: error.message || "Invalid credentials",
+        title: "Login Failed", 
+        description: errorMessage,
         variant: "destructive",
+        action: (
+          <AlertCircle className="h-4 w-4 text-red-600" />
+        ),
       });
+      
+      // Set specific field errors based on error type
+      if (errorMessage.toLowerCase().includes('email')) {
+        setErrors({ email: "Email not found or invalid" });
+      } else if (errorMessage.toLowerCase().includes('password')) {
+        setErrors({ password: "Incorrect password" });
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!forgotPasswordEmail) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotPasswordEmail)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setForgotPasswordLoading(true);
+
+    try {
+      // Mock API call - replace with actual forgot password API
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setResetEmailSent(true);
+      toast({
+        title: "Reset Email Sent",
+        description: "Password reset instructions have been sent to your email",
+        action: (
+          <Mail className="h-4 w-4 text-blue-600" />
+        ),
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to send reset email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setForgotPasswordLoading(false);
+    }
+  };
+
+  const getRoleDisplayName = (role: string) => {
+    const roleMap: { [key: string]: string } = {
+      'super_admin': 'Super Admin',
+      'central_admin': 'Central Admin',
+      'state_nodal_admin': 'State Nodal Admin',
+      'state_sc_corporation_admin': 'State SC Corporation Admin',
+      'state_treasury': 'State Treasury',
+      'district_collector': 'District Collector',
+      'district_pacc_admin': 'District PACC Admin',
+      'implementing_agency_user': 'Implementing Agency',
+      'gram_panchayat_user': 'Gram Panchayat User',
+      'contractor_vendor': 'Contractor/Vendor',
+      'auditor_oversight': 'Auditor/Oversight',
+      'technical_support_group': 'Technical Support'
+    };
+    return roleMap[role] || role;
   };
 
   return (
@@ -95,23 +207,35 @@ const Login = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-3">
                 {[
-                  { role: "Super Admin", description: "Complete system administration" },
-                  { role: "Central Admin", description: "National-level oversight" },
-                  { role: "State Nodal Admin", description: "State-level management" },
-                  { role: "State SC Corporation Admin", description: "SC community programs" },
-                  { role: "District Collector", description: "District coordination" },
-                  { role: "District PACC Admin", description: "Project appraisal" },
-                  { role: "Implementing Agency", description: "Project execution" },
-                  { role: "Gram Panchayat User", description: "Village-level implementation" },
-                  { role: "Contractor/Vendor", description: "Contract management" },
-                  { role: "Auditor/Oversight", description: "Compliance monitoring" },
-                  { role: "Technical Support", description: "System maintenance" }
+                  { role: "Super Admin", description: "Complete system administration", email: "super_admin@gmail.com" },
+                  { role: "Central Admin", description: "National-level oversight", email: "central_admin@gmail.com" },
+                  { role: "State Nodal Admin", description: "State-level management", email: "state_nodal_admin@gmail.com" },
+                  { role: "State SC Corporation Admin", description: "SC community programs", email: "state_sc_corporation_admin@gmail.com" },
+                  { role: "State Treasury", description: "Fund management & disbursement", email: "treasury@maharashtra.gov.in" },
+                  { role: "District Collector", description: "District coordination", email: "district_collector@gmail.com" },
+                  { role: "District PACC Admin", description: "Project appraisal", email: "district_pacc_admin@gmail.com" },
+                  { role: "Implementing Agency", description: "Project execution", email: "implementing_agency_user@gmail.com" },
+                  { role: "Gram Panchayat User", description: "Village-level implementation", email: "gram_panchayat_user@gmail.com" },
+                  { role: "Contractor/Vendor", description: "Contract management", email: "contractor_vendor@gmail.com" },
+                  { role: "Auditor/Oversight", description: "Compliance monitoring", email: "auditor_oversight@gmail.com" },
+                  { role: "Technical Support", description: "System maintenance", email: "technical_support_group@gmail.com" }
                 ].map((item, index) => (
-                  <div key={index} className="flex items-start p-3 bg-blue-50 rounded-lg">
+                  <div key={index} className="flex items-start p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 mt-2 flex-shrink-0"></div>
-                    <div>
-                      <span className="font-medium text-gray-800">{item.role}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-gray-800">{item.role}</span>
+                        <button
+                          onClick={() => {
+                            setFormData({ email: item.email, password: "123123" });
+                          }}
+                          className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors"
+                        >
+                          Use Demo
+                        </button>
+                      </div>
                       <p className="text-sm text-gray-600">{item.description}</p>
+                      <p className="text-xs text-gray-500 mt-1 font-mono">{item.email}</p>
                     </div>
                   </div>
                 ))}
@@ -154,63 +278,177 @@ const Login = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <Label htmlFor="email" className="text-white/90 text-sm font-medium">
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="mt-1 bg-white text-gray-900 border-0 focus:ring-2 focus:ring-blue-300"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="password" className="text-white/90 text-sm font-medium">
-                    Password
-                  </Label>
-                  <div className="relative mt-1">
+              {!showForgotPassword ? (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <Label htmlFor="email" className="text-white/90 text-sm font-medium">
+                      Email Address
+                    </Label>
                     <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
-                      className="bg-white text-gray-900 border-0 focus:ring-2 focus:ring-blue-300 pr-10"
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      className={`mt-1 bg-white text-gray-900 border-0 focus:ring-2 focus:ring-blue-300 ${
+                        errors.email ? 'border-red-500 focus:ring-red-300' : ''
+                      }`}
                       required
                     />
+                    {errors.email && (
+                      <p className="mt-1 text-sm text-red-200 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        {errors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="password" className="text-white/90 text-sm font-medium">
+                      Password
+                    </Label>
+                    <div className="relative mt-1">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        value={formData.password}
+                        onChange={(e) => handleInputChange("password", e.target.value)}
+                        className={`bg-white text-gray-900 border-0 focus:ring-2 focus:ring-blue-300 pr-10 ${
+                          errors.password ? 'border-red-500 focus:ring-red-300' : ''
+                        }`}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="mt-1 text-sm text-red-200 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        {errors.password}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-sm text-blue-200 hover:text-white underline"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      Forgot Password?
                     </button>
+                    <div className="flex items-center text-sm text-blue-200">
+                      <Shield className="w-4 h-4 mr-1" />
+                      Secure Login
+                    </div>
                   </div>
-                </div>
 
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-white text-blue-700 hover:bg-gray-100 font-medium py-3 rounded-md transition-colors flex items-center justify-center"
-                >
-                  {isLoading ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-700"></div>
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-white text-blue-700 hover:bg-gray-100 font-medium py-3 rounded-md transition-colors flex items-center justify-center"
+                  >
+                    {isLoading ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-700"></div>
+                    ) : (
+                      <>
+                        <LogIn className="w-4 h-4 mr-2" />
+                        Login to Dashboard
+                      </>
+                    )}
+                  </Button>
+                </form>
+              ) : (
+                // Forgot Password Form
+                <div className="space-y-6">
+                  {!resetEmailSent ? (
+                    <form onSubmit={handleForgotPassword}>
+                      <div className="text-center mb-4">
+                        <h3 className="text-xl font-semibold text-white mb-2">Reset Password</h3>
+                        <p className="text-blue-100 text-sm">
+                          Enter your email address and we'll send you instructions to reset your password.
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="forgotEmail" className="text-white/90 text-sm font-medium">
+                          Email Address
+                        </Label>
+                        <Input
+                          id="forgotEmail"
+                          type="email"
+                          placeholder="Enter your registered email"
+                          value={forgotPasswordEmail}
+                          onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                          className="mt-1 bg-white text-gray-900 border-0 focus:ring-2 focus:ring-blue-300"
+                          required
+                        />
+                      </div>
+
+                      <div className="flex space-x-3 mt-6">
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setShowForgotPassword(false);
+                            setForgotPasswordEmail("");
+                            setResetEmailSent(false);
+                          }}
+                          variant="outline"
+                          className="flex-1 border-white text-white hover:bg-white hover:text-blue-700"
+                        >
+                          Back to Login
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={forgotPasswordLoading}
+                          className="flex-1 bg-white text-blue-700 hover:bg-gray-100"
+                        >
+                          {forgotPasswordLoading ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
+                          ) : (
+                            <>
+                              <Mail className="w-4 h-4 mr-2" />
+                              Send Reset Email
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </form>
                   ) : (
-                    <>
-                      <LogIn className="w-4 h-4 mr-2" />
-                      Login to Dashboard
-                    </>
+                    // Reset Email Sent Confirmation
+                    <div className="text-center space-y-4">
+                      <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto">
+                        <CheckCircle className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-white">Email Sent!</h3>
+                      <p className="text-blue-100 text-sm">
+                        Password reset instructions have been sent to<br />
+                        <strong>{forgotPasswordEmail}</strong>
+                      </p>
+                      <p className="text-blue-200 text-xs">
+                        Didn't receive the email? Check your spam folder or contact technical support.
+                      </p>
+                      <Button
+                        onClick={() => {
+                          setShowForgotPassword(false);
+                          setForgotPasswordEmail("");
+                          setResetEmailSent(false);
+                        }}
+                        variant="outline"
+                        className="mt-4 border-white text-white hover:bg-white hover:text-blue-700"
+                      >
+                        Back to Login
+                      </Button>
+                    </div>
                   )}
-                </Button>
-
-
-              </form>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -482,9 +482,421 @@ function getUserApprovalLevel(user) {
     'district_pacc_admin': 'District',
     'state_nodal_admin': 'State',
     'state_sc_corporation_admin': 'State',
+    'state_treasury': 'State',
     'central_admin': 'Central',
     'super_admin': 'Central'
   };
   
   return levelMap[user.role] || null;
+}
+
+// @desc    Initiate automatic fund flow from center to state
+// @route   POST /api/funds/initiate-central-release
+// @access  Private (Central Admin only)
+exports.initiateCentralRelease = async (req, res) => {
+  try {
+    const { projectId, amount, purpose, milestoneId } = req.body;
+    
+    // Only central admin can initiate central releases
+    if (!['super_admin', 'central_admin'].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only central administrators can initiate central fund releases'
+      });
+    }
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found'
+      });
+    }
+
+    // Create fund release from Central to State Treasury
+    const centralRelease = await FundManagement.create({
+      transactionId: `CR-${Date.now()}-${require('crypto').randomBytes(4).toString('hex')}`,
+      projectId,
+      milestoneId,
+      transactionType: 'Release',
+      amount,
+      transactionDate: new Date(),
+      sourceAgency: 'Central Government',
+      destinationAgency: 'State Treasury',
+      approvedBy: req.user._id,
+      purpose: purpose || 'Central fund release to state treasury',
+      status: 'Completed',
+      pfmsReferenceNumber: `PFMS-CR-${Date.now()}`,
+      utilizationDetails: {
+        category: 'Central Release',
+        description: purpose || 'Fund release from central government to state treasury'
+      },
+      auditTrail: [{
+        action: 'Central Release Initiated',
+        performedBy: req.user._id,
+        details: `Central release of ₹${amount} initiated for project ${project.projectName}`
+      }]
+    });
+
+    // Update project financials
+    project.financials.totalReleased += amount;
+    await project.save();
+
+    // Automatically trigger State Treasury notification for further processing
+    await createStateNotification(project, centralRelease);
+
+    res.status(201).json({
+      success: true,
+      data: centralRelease,
+      message: 'Central fund release initiated successfully'
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error initiating central fund release',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Process state treasury fund flow to implementing agencies
+// @route   POST /api/funds/process-state-release
+// @access  Private (State Treasury only)
+exports.processStateRelease = async (req, res) => {
+  try {
+    const { projectId, milestoneId, amount, destinationAgency } = req.body;
+    
+    // Only state treasury can process state releases
+    if (req.user.role !== 'state_treasury') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only state treasury officials can process state fund releases'
+      });
+    }
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found'
+      });
+    }
+
+    // Check if state treasury has received funds for this project
+    const availableFunds = await checkAvailableStateFunds(projectId);
+    if (availableFunds < amount) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient funds available. Available: ₹${availableFunds}, Requested: ₹${amount}`
+      });
+    }
+
+    // Create fund release from State Treasury to Implementing Agency
+    const stateRelease = await FundManagement.create({
+      transactionId: `SR-${Date.now()}-${require('crypto').randomBytes(4).toString('hex')}`,
+      projectId,
+      milestoneId,
+      transactionType: 'Release',
+      amount,
+      transactionDate: new Date(),
+      sourceAgency: 'State Treasury',
+      destinationAgency: destinationAgency || project.assignedAgencies?.implementingAgency || 'Implementing Agency',
+      approvedBy: req.user._id,
+      purpose: `State treasury release for milestone completion`,
+      status: 'Completed',
+      pfmsReferenceNumber: `PFMS-SR-${Date.now()}`,
+      utilizationDetails: {
+        category: 'State Release',
+        description: `Fund release from state treasury to implementing agency for milestone completion`
+      },
+      auditTrail: [{
+        action: 'State Release Processed',
+        performedBy: req.user._id,
+        details: `State treasury released ₹${amount} to ${destinationAgency} for project ${project.projectName}`
+      }]
+    });
+
+    // Update project financials
+    project.financials.totalReleased += amount;
+    await project.save();
+
+    res.status(201).json({
+      success: true,
+      data: stateRelease,
+      message: 'State fund release processed successfully'
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error processing state fund release',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get fund flow status for a project
+// @route   GET /api/funds/flow-status/:projectId
+// @access  Private
+exports.getFundFlowStatus = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found'
+      });
+    }
+
+    // Check permissions
+    if (!hasProjectFundAccess(req.user, project)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Insufficient permissions to view fund flow status'
+      });
+    }
+
+    // Get fund flow transactions
+    const fundFlow = await FundManagement.find({ projectId })
+      .populate('milestoneId', 'milestoneName category status')
+      .sort({ transactionDate: 1 });
+
+    // Calculate flow summary
+    const flowSummary = {
+      centralToState: 0,
+      stateToAgency: 0,
+      totalUtilized: 0,
+      pendingReleases: 0
+    };
+
+    const flowDetails = [];
+
+    fundFlow.forEach(transaction => {
+      if (transaction.sourceAgency === 'Central Government' && transaction.destinationAgency === 'State Treasury') {
+        flowSummary.centralToState += transaction.amount;
+      } else if (transaction.sourceAgency === 'State Treasury') {
+        flowSummary.stateToAgency += transaction.amount;
+      }
+
+      if (transaction.transactionType === 'Utilization') {
+        flowSummary.totalUtilized += transaction.amount;
+      }
+
+      if (transaction.status === 'Pending') {
+        flowSummary.pendingReleases += transaction.amount;
+      }
+
+      flowDetails.push({
+        date: transaction.transactionDate,
+        from: transaction.sourceAgency,
+        to: transaction.destinationAgency,
+        amount: transaction.amount,
+        type: transaction.transactionType,
+        status: transaction.status,
+        milestone: transaction.milestoneId?.milestoneName,
+        reference: transaction.pfmsReferenceNumber
+      });
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        project: {
+          name: project.projectName,
+          id: project.projectId,
+          sanctionedAmount: project.financials.sanctionedAmount,
+          totalReleased: project.financials.totalReleased,
+          totalUtilized: project.financials.totalUtilized
+        },
+        flowSummary,
+        flowDetails
+      },
+      message: 'Fund flow status retrieved successfully'
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving fund flow status',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get state treasury dashboard data
+// @route   GET /api/funds/state-treasury-dashboard
+// @access  Private (State Treasury only)
+exports.getStateTreasuryDashboard = async (req, res) => {
+  try {
+    if (req.user.role !== 'state_treasury') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access restricted to state treasury officials'
+      });
+    }
+
+    const state = req.user.jurisdiction?.state;
+    
+    // Get dashboard data
+    const dashboardData = {
+      fundsSummary: await getStateFundsSummary(state),
+      recentTransactions: await getRecentStateTransactions(state),
+      pendingReleases: await getPendingStateReleases(state),
+      pfmsIntegration: await getPFMSIntegrationStatus(state),
+      auditCompliance: await getAuditComplianceData(state)
+    };
+
+    res.status(200).json({
+      success: true,
+      data: dashboardData,
+      message: 'State treasury dashboard data retrieved successfully'
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving state treasury dashboard data',
+      error: error.message
+    });
+  }
+};
+
+// Helper functions for fund flow automation
+async function checkAvailableStateFunds(projectId) {
+  const received = await FundManagement.aggregate([
+    {
+      $match: {
+        projectId: require('mongoose').Types.ObjectId(projectId),
+        destinationAgency: 'State Treasury',
+        status: 'Completed'
+      }
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } }
+  ]);
+
+  const released = await FundManagement.aggregate([
+    {
+      $match: {
+        projectId: require('mongoose').Types.ObjectId(projectId),
+        sourceAgency: 'State Treasury',
+        status: 'Completed'
+      }
+    },
+    { $group: { _id: null, total: { $sum: '$amount' } } }
+  ]);
+
+  const totalReceived = received[0]?.total || 0;
+  const totalReleased = released[0]?.total || 0;
+  
+  return totalReceived - totalReleased;
+}
+
+async function createStateNotification(project, centralRelease) {
+  // This would typically integrate with a notification system
+  console.log(`State Treasury Notification: ₹${centralRelease.amount} received for project ${project.projectName}`);
+  
+  // You could add database notification record here
+  // const Notification = require('../models/Notification');
+  // await Notification.create({...});
+}
+
+async function getStateFundsSummary(state) {
+  const summary = await FundManagement.aggregate([
+    {
+      $lookup: {
+        from: 'projects',
+        localField: 'projectId',
+        foreignField: '_id',
+        as: 'project'
+      }
+    },
+    {
+      $match: {
+        'project.location.state': state
+      }
+    },
+    {
+      $group: {
+        _id: {
+          sourceAgency: '$sourceAgency',
+          destinationAgency: '$destinationAgency',
+          status: '$status'
+        },
+        totalAmount: { $sum: '$amount' },
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+
+  return summary;
+}
+
+async function getRecentStateTransactions(state) {
+  const transactions = await FundManagement.find()
+    .populate({
+      path: 'projectId',
+      match: { 'location.state': state },
+      select: 'projectName projectId location'
+    })
+    .populate('approvedBy', 'name role')
+    .sort({ transactionDate: -1 })
+    .limit(20);
+
+  return transactions.filter(t => t.projectId); // Filter out null populated projects
+}
+
+async function getPendingStateReleases(state) {
+  const pending = await FundManagement.find({
+    sourceAgency: 'State Treasury',
+    status: 'Pending'
+  })
+  .populate({
+    path: 'projectId',
+    match: { 'location.state': state },
+    select: 'projectName projectId location'
+  })
+  .populate('milestoneId', 'milestoneName category');
+
+  return pending.filter(p => p.projectId);
+}
+
+async function getPFMSIntegrationStatus(state) {
+  const pfmsData = await FundManagement.aggregate([
+    {
+      $lookup: {
+        from: 'projects',
+        localField: 'projectId',
+        foreignField: '_id',
+        as: 'project'
+      }
+    },
+    {
+      $match: {
+        'project.location.state': state,
+        pfmsReferenceNumber: { $exists: true, $ne: null }
+      }
+    },
+    {
+      $group: {
+        _id: '$status',
+        count: { $sum: 1 },
+        totalAmount: { $sum: '$amount' }
+      }
+    }
+  ]);
+
+  return pfmsData;
+}
+
+async function getAuditComplianceData(state) {
+  // Mock implementation - replace with actual audit data
+  return {
+    complianceRate: 94.5,
+    lastAuditDate: new Date('2024-01-15'),
+    pendingAudits: 3,
+    resolvedIssues: 12
+  };
 }

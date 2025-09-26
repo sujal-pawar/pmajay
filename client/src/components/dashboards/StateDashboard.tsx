@@ -43,19 +43,21 @@ const StateDashboard: React.FC<StateDashboardProps> = ({ className }) => {
         state: stateFilter 
       }, token || undefined);
       
-      setProjects(response.data || []);
+      // Handle paginated response structure
+      const projectData = response?.data?.projects || response?.data || [];
+      setProjects(Array.isArray(projectData) ? projectData : []);
 
       // Fetch pending fund approvals for state
       try {
         const fundsResponse = await fundsApi.getPendingApprovals(token || undefined);
-        setPendingFunds(fundsResponse.data || []);
+        const fundsData = Array.isArray(fundsResponse?.data) ? fundsResponse.data : [];
+        setPendingFunds(fundsData);
       } catch (error) {
         console.warn('Could not fetch pending funds:', error);
         setPendingFunds([]);
       }
 
-      // Calculate statistics
-      const projectData = response.data || [];
+      // Calculate statistics (using already extracted projectData)
       const totalProjects = projectData.length;
       const activeProjects = projectData.filter((p: any) => p.status === 'Active').length;
       const completedProjects = projectData.filter((p: any) => p.status === 'Completed').length;
@@ -262,9 +264,9 @@ const StateDashboard: React.FC<StateDashboardProps> = ({ className }) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {Array.from(new Set(projects.map(p => p.location?.district).filter(Boolean))).slice(0, 8).map((district) => {
-                    const districtProjects = projects.filter(p => p.location?.district === district);
-                    const percentage = projects.length > 0 ? (districtProjects.length / projects.length) * 100 : 0;
+                  {Array.from(new Set((projects || []).map(p => p.location?.district).filter(Boolean))).slice(0, 8).map((district) => {
+                    const districtProjects = (projects || []).filter(p => p.location?.district === district);
+                    const percentage = (projects || []).length > 0 ? (districtProjects.length / (projects || []).length) * 100 : 0;
                     
                     return (
                       <div key={district} className="flex items-center justify-between">
@@ -294,8 +296,8 @@ const StateDashboard: React.FC<StateDashboardProps> = ({ className }) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {Array.from(new Set(projects.map(p => p.schemeType))).map((scheme) => {
-                    const schemeProjects = projects.filter(p => p.schemeType === scheme);
+                  {Array.from(new Set((projects || []).map(p => p.schemeType))).map((scheme) => {
+                    const schemeProjects = (projects || []).filter(p => p.schemeType === scheme);
                     const schemeBudget = schemeProjects.reduce((sum, p) => sum + (p.financials?.sanctionedAmount || 0), 0);
                     const percentage = stats.totalBudget > 0 ? (schemeBudget / stats.totalBudget) * 100 : 0;
                     
@@ -328,7 +330,7 @@ const StateDashboard: React.FC<StateDashboardProps> = ({ className }) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {projects.map((project) => (
+                {(projects || []).map((project) => (
                   <div key={project._id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
@@ -367,7 +369,7 @@ const StateDashboard: React.FC<StateDashboardProps> = ({ className }) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {projects
+                {(projects || [])
                   .filter(p => p.approvals?.stateApprovalStatus === 'Pending')
                   .map((project) => (
                     <div key={project._id} className="flex items-center justify-between p-4 border rounded-lg bg-yellow-50">
@@ -414,8 +416,8 @@ const StateDashboard: React.FC<StateDashboardProps> = ({ className }) => {
 
         <TabsContent value="districts" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from(new Set(projects.map(p => p.location?.district).filter(Boolean))).map((district) => {
-              const districtProjects = projects.filter(p => p.location?.district === district);
+            {Array.from(new Set((projects || []).map(p => p.location?.district).filter(Boolean))).map((district) => {
+              const districtProjects = (projects || []).filter(p => p.location?.district === district);
               const activeCount = districtProjects.filter(p => p.status === 'Active').length;
               const completedCount = districtProjects.filter(p => p.status === 'Completed').length;
               const totalBudget = districtProjects.reduce((sum, p) => sum + (p.financials?.sanctionedAmount || 0), 0);

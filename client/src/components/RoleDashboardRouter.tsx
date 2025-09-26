@@ -5,6 +5,8 @@ import DashboardLayout from './DashboardLayout';
 import CentralDashboard from './dashboards/CentralDashboard';
 import StateDashboard from './dashboards/StateDashboard';
 import DistrictDashboard from './dashboards/DistrictDashboard';
+import DistrictCollectorDashboard from './dashboards/DistrictCollectorDashboard';
+import DistrictPACCDashboard from './dashboards/DistrictPACCDashboard';
 import GramPanchayatDashboard from './dashboards/GramPanchayatDashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { 
@@ -293,8 +295,18 @@ const RoleDashboardRouter: React.FC = () => {
       return <StateDashboard />;
     }
     
-    // District level roles
-    if (hasPermission(user, PERMISSIONS.MANAGE_DISTRICT_DATA) || user.role === 'district_collector' || user.role === 'district_pacc_admin') {
+    // District Collector - specialized dashboard
+    if (user.role === 'district_collector') {
+      return <DistrictCollectorDashboard />;
+    }
+    
+    // District PACC Admin - specialized dashboard
+    if (user.role === 'district_pacc_admin') {
+      return <DistrictPACCDashboard />;
+    }
+    
+    // Other district level roles
+    if (hasPermission(user, PERMISSIONS.MANAGE_DISTRICT_DATA)) {
       return <DistrictDashboard />;
     }
     

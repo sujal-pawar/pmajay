@@ -55,11 +55,14 @@ const GramPanchayatDashboard: React.FC<GramPanchayatDashboardProps> = ({ classNa
         district: districtFilter
       }, token || undefined);
       
+      // Handle paginated response structure
+      const projectsData = response?.data?.projects || response?.data || [];
+      
       // Filter projects that affect the gram panchayat area
-      const relevantProjects = (response.data || []).filter((project: any) => 
+      const relevantProjects = Array.isArray(projectsData) ? projectsData.filter((project: any) => 
         !villageFilter || project.location?.village === villageFilter ||
         !blockFilter || project.location?.block === blockFilter
-      );
+      ) : [];
       
       setProjects(relevantProjects);
 
@@ -71,13 +74,16 @@ const GramPanchayatDashboard: React.FC<GramPanchayatDashboardProps> = ({ classNa
       for (const project of relevantProjects) {
         try {
           const milestonesResponse = await milestonesApi.getByProject(project._id, token || undefined);
-          allMilestones.push(...(milestonesResponse.data || []));
+          const milestonesData = Array.isArray(milestonesResponse?.data) ? milestonesResponse.data : [];
+          allMilestones.push(...milestonesData);
           
           const beneficiariesResponse = await beneficiariesApi.getByProject(project._id, token || undefined);
-          allBeneficiaries.push(...(beneficiariesResponse.data || []));
+          const beneficiariesData = Array.isArray(beneficiariesResponse?.data) ? beneficiariesResponse.data : [];
+          allBeneficiaries.push(...beneficiariesData);
           
           const progressResponse = await progressApi.getByProject(project._id, token || undefined);
-          allProgressUpdates.push(...(progressResponse.data || []));
+          const progressData = Array.isArray(progressResponse?.data) ? progressResponse.data : [];
+          allProgressUpdates.push(...progressData);
         } catch (error) {
           console.warn(`Error fetching data for project ${project._id}:`, error);
         }
@@ -326,7 +332,7 @@ const GramPanchayatDashboard: React.FC<GramPanchayatDashboardProps> = ({ classNa
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {progressUpdates.slice(0, 5).map((update) => {
+                  {(progressUpdates || []).slice(0, 5).map((update) => {
                     const project = projects.find(p => p._id === update.projectId);
                     return (
                       <div key={update._id} className="flex items-start gap-3 p-3 border rounded-lg">
@@ -407,7 +413,7 @@ const GramPanchayatDashboard: React.FC<GramPanchayatDashboardProps> = ({ classNa
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {milestones
+                {(milestones || [])
                   .filter(m => m.status === 'Completed' && m.verificationStatus === 'Pending')
                   .map((milestone) => {
                     const project = projects.find(p => p._id === milestone.projectId);
@@ -498,7 +504,7 @@ const GramPanchayatDashboard: React.FC<GramPanchayatDashboardProps> = ({ classNa
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {projects.map((project) => (
+                {(projects || []).map((project) => (
                   <div key={project._id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
@@ -537,7 +543,7 @@ const GramPanchayatDashboard: React.FC<GramPanchayatDashboardProps> = ({ classNa
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {beneficiaries.map((beneficiary) => {
+                {(beneficiaries || []).map((beneficiary) => {
                   const project = projects.find(p => p._id === beneficiary.projectId);
                   return (
                     <div key={beneficiary._id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -595,7 +601,7 @@ const GramPanchayatDashboard: React.FC<GramPanchayatDashboardProps> = ({ classNa
                   </Button>
                 </div>
                 
-                {progressUpdates.map((update) => {
+                {(progressUpdates || []).map((update) => {
                   const project = projects.find(p => p._id === update.projectId);
                   return (
                     <div key={update._id} className="p-4 border rounded-lg">

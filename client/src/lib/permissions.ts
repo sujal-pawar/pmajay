@@ -7,6 +7,7 @@ export const ROLE_LEVELS = {
   'state_nodal_admin': 8,
   'auditor_oversight': 8,
   'state_sc_corporation_admin': 7,
+  'state_treasury': 7,
   'technical_support_group': 6,
   'district_collector': 6,
   'district_pacc_admin': 5,
@@ -48,6 +49,11 @@ export const PERMISSIONS = {
   // Administrative
   VIEW_AUDIT_LOGS: 'view_audit_logs',
   SYSTEM_SUPPORT: 'system_support',
+  
+  // Treasury Specific
+  FUND_FLOW_MANAGEMENT: 'fund_flow_management',
+  AUDIT_EXPENDITURES: 'audit_expenditures',
+  PFMS_INTEGRATION: 'pfms_integration',
   
   // Regional Access
   MANAGE_STATE_DATA: 'manage_state_data',
@@ -107,6 +113,22 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.VERIFY_BENEFICIARY,
     PERMISSIONS.MANAGE_STATE_DATA,
     PERMISSIONS.MANAGE_DISTRICT_DATA
+  ],
+  'state_sc_corporation_admin': [
+    PERMISSIONS.MANAGE_BENEFICIARIES,
+    PERMISSIONS.MANAGE_STATE_DATA,
+    PERMISSIONS.APPROVE_PROJECT,
+    PERMISSIONS.VIEW_FINANCIAL_DATA,
+    PERMISSIONS.APPROVE_FUNDS
+  ],
+  'state_treasury': [
+    PERMISSIONS.FUND_FLOW_MANAGEMENT,
+    PERMISSIONS.AUDIT_EXPENDITURES,
+    PERMISSIONS.APPROVE_FUNDS,
+    PERMISSIONS.VIEW_AUDIT_LOGS,
+    PERMISSIONS.PFMS_INTEGRATION,
+    PERMISSIONS.MANAGE_STATE_DATA,
+    PERMISSIONS.VIEW_FINANCIAL_DATA
   ],
   'district_collector': [
     PERMISSIONS.CREATE_PROJECT,
@@ -209,6 +231,7 @@ export const DASHBOARD_ROUTES = {
   'central_admin': '/dashboard/central-admin',
   'state_nodal_admin': '/dashboard/state-nodal',
   'state_sc_corporation_admin': '/dashboard/state-sc-corp',
+  'state_treasury': '/dashboard/state-treasury',
   'district_collector': '/dashboard/district-collector',
   'district_pacc_admin': '/dashboard/district-pacc',
   'implementing_agency_user': '/dashboard/implementing-agency',
@@ -228,6 +251,7 @@ export const ROLE_DISPLAY_NAMES = {
   'central_admin': 'Central Admin',
   'state_nodal_admin': 'State Nodal Admin',
   'state_sc_corporation_admin': 'State SC Corporation Admin',
+  'state_treasury': 'State Treasury',
   'district_collector': 'District Collector',
   'district_pacc_admin': 'District PACC Admin',
   'implementing_agency_user': 'Implementing Agency User',

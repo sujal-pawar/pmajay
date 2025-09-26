@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
         'central_admin', 
         'state_nodal_admin',
         'state_sc_corporation_admin',
+        'state_treasury',
         'district_collector',
         'district_pacc_admin',
         'implementing_agency_user',
@@ -63,7 +64,10 @@ const userSchema = new mongoose.Schema(
         'village_verification',
         'contractor_updates',
         'audit_access',
-        'system_support'
+        'system_support',
+        'fund_flow_management',
+        'audit_expenditures',
+        'pfms_integration'
       ]
     }],
     isEmailVerified: {
@@ -124,6 +128,10 @@ userSchema.methods.getRolePermissions = function() {
     state_sc_corporation_admin: [
       'manage_beneficiaries', 'manage_state_data', 'approve_projects'
     ],
+    state_treasury: [
+      'fund_flow_management', 'audit_expenditures', 'approve_funds', 
+      'view_audit_logs', 'pfms_integration', 'manage_state_data'
+    ],
     district_collector: [
       'district_coordination', 'manage_beneficiaries', 'project_appraisal'
     ],
@@ -163,6 +171,7 @@ userSchema.methods.getDashboardRoute = function() {
     central_admin: '/dashboard/central-admin',
     state_nodal_admin: '/dashboard/state-nodal',
     state_sc_corporation_admin: '/dashboard/state-sc-corp',
+    state_treasury: '/dashboard/state-treasury',
     district_collector: '/dashboard/district-collector',
     district_pacc_admin: '/dashboard/district-pacc',
     implementing_agency_user: '/dashboard/implementing-agency',

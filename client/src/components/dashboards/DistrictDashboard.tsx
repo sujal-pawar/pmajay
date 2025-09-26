@@ -124,6 +124,10 @@ const DistrictDashboard: React.FC<DistrictDashboardProps> = ({ className }) => {
       });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to fetch dashboard data');
+      setProjects([]); // Ensure projects is always an array
+      setMilestones([]);
+      setBeneficiaries([]);
     } finally {
       setLoading(false);
     }
@@ -169,6 +173,22 @@ const DistrictDashboard: React.FC<DistrictDashboardProps> = ({ className }) => {
       <div className={`p-6 ${className}`}>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`p-6 ${className}`}>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="text-red-600 text-lg font-semibold mb-2">Error Loading Dashboard</div>
+            <div className="text-gray-600 mb-4">{error}</div>
+            <Button onClick={fetchDashboardData}>
+              Try Again
+            </Button>
+          </div>
         </div>
       </div>
     );

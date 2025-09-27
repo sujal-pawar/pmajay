@@ -113,6 +113,9 @@ exports.getProjectById = async (req, res) => {
 // Create new project
 exports.createProject = async (req, res) => {
   try {
+    // Dynamic import for uuid (ES module)
+    const { v4: uuidv4 } = await import('uuid');
+    
     const projectData = {
       ...req.body,
       projectId: req.body.projectId || `PMAJAY-${Date.now()}-${uuidv4().substr(0, 8)}`,

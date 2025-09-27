@@ -7,7 +7,10 @@ import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Textarea } from '../ui/textarea';
-import { CalendarIcon, ClockIcon, AlertTriangleIcon, CheckCircleIcon, UsersIcon, TrendingUpIcon, CameraIcon } from 'lucide-react';
+import { Label } from '../ui/label';
+import { CalendarIcon, ClockIcon, AlertTriangleIcon, CheckCircleIcon, UsersIcon, TrendingUpIcon, CameraIcon, MessageCircle, Send, MapPin } from 'lucide-react';
+import MessagingComponent from '../MessagingComponent';
+import { useSocket } from '../../contexts/SocketContext';
 
 interface GramPanchayatDashboardProps {
   className?: string;
@@ -15,6 +18,7 @@ interface GramPanchayatDashboardProps {
 
 const GramPanchayatDashboard: React.FC<GramPanchayatDashboardProps> = ({ className }) => {
   const { user, token } = useAuth();
+  const { unreadCount, initiateConversation } = useSocket();
   const [projects, setProjects] = useState<any[]>([]);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [beneficiaries, setBeneficiaries] = useState<any[]>([]);
@@ -36,6 +40,10 @@ const GramPanchayatDashboard: React.FC<GramPanchayatDashboardProps> = ({ classNa
   const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
   const [verificationDialog, setVerificationDialog] = useState(false);
   const [verificationRemarks, setVerificationRemarks] = useState('');
+  const [messagingOpen, setMessagingOpen] = useState(false);
+  const [projectMessageDialog, setProjectMessageDialog] = useState(false);
+  const [selectedProjectForMessage, setSelectedProjectForMessage] = useState<any>(null);
+  const [projectMessageContent, setProjectMessageContent] = useState('');
 
   useEffect(() => {
     fetchDashboardData();
@@ -216,9 +224,24 @@ const GramPanchayatDashboard: React.FC<GramPanchayatDashboardProps> = ({ classNa
             {user?.jurisdiction?.village || user?.jurisdiction?.block}, {user?.jurisdiction?.district} - Field Operations
           </p>
         </div>
-        <Button onClick={fetchDashboardData}>
-          Refresh Data
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setMessagingOpen(true)}
+            className="relative"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Messages
+            {unreadCount > 0 && (
+              <Badge variant="destructive" className="ml-2 text-xs">
+                {unreadCount}
+              </Badge>
+            )}
+          </Button>
+          <Button onClick={fetchDashboardData}>
+            Refresh Data
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -646,6 +669,12 @@ const GramPanchayatDashboard: React.FC<GramPanchayatDashboardProps> = ({ classNa
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Messaging Component */}
+      <MessagingComponent 
+        isOpen={messagingOpen} 
+        onClose={() => setMessagingOpen(false)} 
+      />
     </div>
   );
 };

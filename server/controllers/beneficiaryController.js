@@ -1,6 +1,5 @@
 const Beneficiary = require('../models/Beneficiary');
 const Project = require('../models/Project');
-const { v4: uuidv4 } = require('uuid');
 
 // Get beneficiaries for a project
 exports.getBeneficiariesByProject = async (req, res) => {
@@ -92,6 +91,9 @@ exports.getBeneficiaryById = async (req, res) => {
 // Create new beneficiary
 exports.createBeneficiary = async (req, res) => {
   try {
+    // Dynamic import for uuid (ES module)
+    const { v4: uuidv4 } = await import('uuid');
+    
     const { projectId } = req.params;
 
     // Verify project exists

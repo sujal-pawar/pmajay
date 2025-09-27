@@ -3,7 +3,6 @@ dotenv.config();
 
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
 
 // Models
 const User = require('./models/User');
@@ -18,6 +17,8 @@ const connectDB = require('./config/db');
 
 const seedData = async () => {
   try {
+    // Dynamic import for uuid (ES module)
+    const { v4: uuidv4 } = await import('uuid');
     console.log('🌱 Starting data seeding...');
 
     await connectDB();

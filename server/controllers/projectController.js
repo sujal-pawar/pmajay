@@ -1,7 +1,6 @@
 const Project = require('../models/Project');
 const Milestone = require('../models/Milestone');
 const ProgressUpdate = require('../models/ProgressUpdate');
-const { v4: uuidv4 } = require('uuid');
 
 // Get all projects with filtering and pagination
 exports.getAllProjects = async (req, res) => {
@@ -107,6 +106,9 @@ exports.getProjectById = async (req, res) => {
 // Create new project
 exports.createProject = async (req, res) => {
   try {
+    // Dynamic import for uuid (ES module)
+    const { v4: uuidv4 } = await import('uuid');
+    
     const projectData = {
       ...req.body,
       projectId: req.body.projectId || `PMAJAY-${Date.now()}-${uuidv4().substr(0, 8)}`,

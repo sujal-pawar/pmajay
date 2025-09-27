@@ -1,7 +1,6 @@
 const ProgressUpdate = require('../models/ProgressUpdate');
 const Project = require('../models/Project');
 const Milestone = require('../models/Milestone');
-const { v4: uuidv4 } = require('uuid');
 
 // Get progress updates for a project
 exports.getProgressUpdatesByProject = async (req, res) => {
@@ -97,6 +96,9 @@ exports.getProgressUpdateById = async (req, res) => {
 // Create new progress update
 exports.createProgressUpdate = async (req, res) => {
   try {
+    // Dynamic import for uuid (ES module)
+    const { v4: uuidv4 } = await import('uuid');
+    
     const { projectId } = req.params;
 
     // Verify project exists

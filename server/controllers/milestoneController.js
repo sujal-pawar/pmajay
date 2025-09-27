@@ -1,6 +1,5 @@
 const Milestone = require('../models/Milestone');
 const Project = require('../models/Project');
-const { v4: uuidv4 } = require('uuid');
 
 // Get all milestones for a project
 exports.getMilestonesByProject = async (req, res) => {
@@ -73,6 +72,9 @@ exports.getMilestoneById = async (req, res) => {
 // Create new milestone
 exports.createMilestone = async (req, res) => {
   try {
+    // Dynamic import for uuid (ES module)
+    const { v4: uuidv4 } = await import('uuid');
+    
     const { projectId } = req.params;
 
     // Verify project exists

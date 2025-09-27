@@ -1,6 +1,5 @@
 const FundManagement = require('../models/FundManagement');
 const Project = require('../models/Project');
-const { v4: uuidv4 } = require('uuid');
 
 // Get fund transactions for a project
 exports.getFundsByProject = async (req, res) => {
@@ -112,6 +111,9 @@ exports.getFundById = async (req, res) => {
 // Create new fund transaction
 exports.createFundTransaction = async (req, res) => {
   try {
+    // Dynamic import for uuid (ES module)
+    const { v4: uuidv4 } = await import('uuid');
+    
     const { projectId } = req.params;
 
     // Verify project exists

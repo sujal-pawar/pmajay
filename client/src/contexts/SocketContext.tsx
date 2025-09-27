@@ -303,8 +303,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   };
 
   const initiateConversation = async (projectId: string, content?: string) => {
+    console.log('initiateConversation called with:', { projectId, content, token: token ? 'present' : 'missing' });
+    
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/messages/initiate-conversation`, {
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/messages/initiate-conversation`;
+      console.log('Making API call to:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -314,14 +319,25 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         body: JSON.stringify({ projectId, content })
       });
 
+      console.log('API response status:', response.status);
+      
       if (response.ok) {
         const result = await response.json();
+        console.log('API response data:', result);
         // Reload conversations to show the new one
         loadConversations();
         return result.data;
       } else {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to initiate conversation');
+        const errorText = await response.text();
+        console.error('API error response:', errorText);
+        let errorMessage;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.message || 'Failed to initiate conversation';
+        } catch {
+          errorMessage = errorText || 'Failed to initiate conversation';
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error initiating conversation:', error);

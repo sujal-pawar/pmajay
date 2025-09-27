@@ -16,9 +16,10 @@ import { formatDistanceToNow } from 'date-fns';
 interface MessagingComponentProps {
   isOpen: boolean;
   onClose: () => void;
+  projects?: any[];
 }
 
-const MessagingComponent: React.FC<MessagingComponentProps> = ({ isOpen, onClose }) => {
+const MessagingComponent: React.FC<MessagingComponentProps> = ({ isOpen, onClose, projects = [] }) => {
   const { user, token } = useAuth();
   const {
     conversations,
@@ -41,7 +42,7 @@ const MessagingComponent: React.FC<MessagingComponentProps> = ({ isOpen, onClose
   const [showNewMessageDialog, setShowNewMessageDialog] = useState(false);
   const [selectedProject, setSelectedProject] = useState('');
   const [newMessageContent, setNewMessageContent] = useState('');
-  const [userProjects, setUserProjects] = useState<any[]>([]);
+  const [userProjects, setUserProjects] = useState<any[]>(projects);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout>();
@@ -51,55 +52,46 @@ const MessagingComponent: React.FC<MessagingComponentProps> = ({ isOpen, onClose
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load user's projects for GP users
-  const loadUserProjects = async () => {
-    if (user?.role !== 'gram_panchayat_user') return;
-    
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/projects`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      });
+  // Update user projects when props change
+  useEffect(() => {
+    setUserProjects(projects);
+  }, [projects]);
 
-      if (response.ok) {
-        const data = await response.json();
-        setUserProjects(data.data || []);
-      }
-    } catch (error) {
-      console.error('Error loading projects:', error);
-    }
-  };
+  // Load user's projects for GP users
+  // Projects are now passed as props, no need to fetch separately
 
   // Handle creating new conversation
   const handleCreateNewMessage = async () => {
-    if (!selectedProject || !user) return;
+    console.log('handleCreateNewMessage called with:', { selectedProject, user: user?.email, messageContent: newMessageContent });
+    
+    if (!selectedProject || !user) {
+      console.error('Missing data:', { selectedProject, user: user?.email });
+      return;
+    }
 
     setLoading(true);
     try {
-      await initiateConversation(selectedProject, newMessageContent);
+      console.log('Initiating conversation...');
+      const result = await initiateConversation(selectedProject, newMessageContent);
+      console.log('Conversation initiated successfully:', result);
+      
       setShowNewMessageDialog(false);
       setSelectedProject('');
       setNewMessageContent('');
     } catch (error) {
       console.error('Error creating conversation:', error);
-      // You could show a toast notification here
+      alert('Error creating conversation: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load conversations and projects on mount
+  // Load conversations on mount
   useEffect(() => {
     if (isOpen) {
       loadConversations();
-      if (user?.role === 'gram_panchayat_user') {
-        loadUserProjects();
-      }
     }
-  }, [isOpen, loadConversations, user?.role]);
+  }, [isOpen, loadConversations]);
 
   const handleConversationSelect = (conversationId: string) => {
     if (currentConversation) {

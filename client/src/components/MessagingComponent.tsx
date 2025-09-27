@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, Phone, Video, MoreVertical, ArrowLeft, Circle, Clock, AlertTriangle, Plus, X } from 'lucide-react';
+import { MessageCircle, Send, MoreVertical, ArrowLeft, Circle, Clock, AlertTriangle, Plus, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
@@ -102,19 +102,31 @@ const MessagingComponent: React.FC<MessagingComponentProps> = ({ isOpen, onClose
   };
 
   const handleSendMessage = async () => {
-    if (!messageInput.trim() || !selectedConversation) return;
+    console.log('handleSendMessage called with:', { messageInput, selectedConversation });
+    
+    if (!messageInput.trim() || !selectedConversation) {
+      console.log('Validation failed:', { messageInputEmpty: !messageInput.trim(), noConversation: !selectedConversation });
+      return;
+    }
 
     const conversation = conversations.find(c => c.conversationId === selectedConversation);
-    if (!conversation) return;
+    console.log('Found conversation:', conversation);
+    
+    if (!conversation) {
+      console.error('No conversation found for selectedConversation:', selectedConversation);
+      return;
+    }
 
     try {
-      await sendMessage({
+      console.log('Sending message...');
+      const result = await sendMessage({
         projectId: conversation.projectId,
         receiverId: conversation.partnerId,
         content: messageInput.trim(),
         messageType: 'text',
         priority: 'medium'
       });
+      console.log('Message sent successfully:', result);
 
       setMessageInput('');
       if (isTyping) {
@@ -123,6 +135,7 @@ const MessagingComponent: React.FC<MessagingComponentProps> = ({ isOpen, onClose
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      alert('Failed to send message: ' + error.message);
     }
   };
 
@@ -341,12 +354,6 @@ const MessagingComponent: React.FC<MessagingComponentProps> = ({ isOpen, onClose
                         </div>
                         <div className="flex space-x-2">
                           <Button variant="ghost" size="sm">
-                            <Phone className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Video className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </div>
@@ -358,18 +365,25 @@ const MessagingComponent: React.FC<MessagingComponentProps> = ({ isOpen, onClose
                 {/* Messages */}
                 <ScrollArea className="flex-1 p-4">
                   <div className="space-y-4">
+                    
+                    {messages.length === 0 ? (
+                      <div className="text-center text-gray-500 py-8">
+                        <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>No messages yet. Start the conversation!</p>
+                      </div>
+                    ) : null}
                     {messages.map((message) => (
                       <div
                         key={message._id}
                         className={`flex ${
-                          message.senderId._id === conversations.find(c => c.conversationId === selectedConversation)?.partnerId ? 'justify-start' : 'justify-end'
+                          message.senderId._id === user?.id ? 'justify-end' : 'justify-start'
                         }`}
                       >
                         <div
                           className={`max-w-[70%] rounded-lg p-3 ${
-                            message.senderId._id === conversations.find(c => c.conversationId === selectedConversation)?.partnerId
-                              ? 'bg-gray-100 text-gray-900'
-                              : 'bg-blue-600 text-white'
+                            message.senderId._id === user?.id
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-900'
                           }`}
                         >
                           {message.messageType === 'rejection_reason' && (

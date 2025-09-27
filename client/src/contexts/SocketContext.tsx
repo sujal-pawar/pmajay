@@ -224,8 +224,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   // Load messages for a conversation
   const loadMessages = async (conversationId: string) => {
+    console.log('loadMessages called for conversationId:', conversationId);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/messages/conversation/${conversationId}`, {
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/messages/conversation/${conversationId}`;
+      console.log('Fetching messages from:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -233,8 +237,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         credentials: 'include'
       });
 
+      console.log('Messages API response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Messages data received:', data);
         setMessages(data.data || []);
         setCurrentConversation(conversationId);
         
@@ -244,6 +251,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             ? { ...conv, unreadCount: 0 }
             : conv
         ));
+      } else {
+        const errorText = await response.text();
+        console.error('Error response from messages API:', errorText);
       }
     } catch (error) {
       console.error('Error loading messages:', error);
@@ -269,8 +279,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     messageType?: string;
     priority?: string;
   }) => {
+    console.log('sendMessage called with data:', data);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/messages/send`, {
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/messages/send`;
+      console.log('Sending message to:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -280,13 +294,26 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         body: JSON.stringify(data)
       });
 
+      console.log('Send message API response status:', response.status);
+
       if (response.ok) {
         const result = await response.json();
-        // Message will be updated via socket event
+        console.log('Message sent successfully:', result);
+        
+        // Immediately add the message to local state for instant feedback
+        if (result.data && currentConversation) {
+          setMessages(prev => [...prev, result.data]);
+        }
+        
         return result.data;
+      } else {
+        const errorText = await response.text();
+        console.error('Error response from send message API:', errorText);
+        throw new Error(errorText || 'Failed to send message');
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      throw error;
     }
   };
 

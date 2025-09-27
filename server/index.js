@@ -14,6 +14,13 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 
+// PM-AJAY Project Management routes
+const projectRoutes = require('./routes/projectRoutes');
+const milestoneRoutes = require('./routes/milestoneRoutes');
+const progressRoutes = require('./routes/progressRoutes');
+const fundRoutes = require('./routes/fundRoutes');
+const beneficiaryRoutes = require('./routes/beneficiaryRoutes');
+
 // Connect to database
 connectDB();
 
@@ -37,6 +44,15 @@ app.use(cors({
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+
+// PM-AJAY Project Management API routes
+app.use('/api/projects', projectRoutes);
+
+// Nested routes for project resources
+app.use('/api/projects/:projectId/milestones', milestoneRoutes);
+app.use('/api/projects/:projectId/progress', progressRoutes);
+app.use('/api/projects/:projectId/funds', fundRoutes);
+app.use('/api/projects/:projectId/beneficiaries', beneficiaryRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {

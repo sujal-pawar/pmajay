@@ -23,7 +23,9 @@ exports.protect = async (req, res, next) => {
         success: false,
         message: 'Not authorized to access this route'
       });
-    }    try {
+    }
+
+    try {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -35,7 +37,9 @@ exports.protect = async (req, res, next) => {
           success: false,
           message: 'User not found'
         });
-      }      // Check email verification for protected routes
+      }
+
+      // Check email verification for protected routes
       if (!user.isEmailVerified && !req.path.includes('/verify-email') && 
           !user.google?.id && !user.facebook?.id) { // Skip verification for OAuth users
         return res.status(401).json({

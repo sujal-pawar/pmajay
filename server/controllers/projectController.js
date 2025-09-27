@@ -1,6 +1,8 @@
 const Project = require('../models/Project');
 const Milestone = require('../models/Milestone');
 const ProgressUpdate = require('../models/ProgressUpdate');
+const Message = require('../models/Message');
+const socketService = require('../utils/socketService');
 
 // Get all projects with filtering and pagination
 exports.getAllProjects = async (req, res) => {
@@ -41,6 +43,11 @@ exports.getAllProjects = async (req, res) => {
       if (req.user.jurisdiction.district) {
         query['location.district'] = req.user.jurisdiction.district;
       }
+    }
+
+    // For Gram Panchayat users, only show their own projects
+    if (req.user.role === 'gram_panchayat_user') {
+      query.createdBy = req.user._id;
     }
 
     const options = {
@@ -480,9 +487,60 @@ exports.makePACCDecision = async (req, res) => {
       { path: 'approvals.approvedBy', select: 'name email role' }
     ]);
 
-    // If approved, notify state level (in real app, send notifications)
+    // Send notifications based on decision
     if (decision === 'Approved') {
       console.log(`Project ${project.projectName} approved by PACC and forwarded to state level`);
+      // Notify GP user about approval
+      socketService.notifyProjectApproval(project._id, project.createdBy._id, {
+        projectName: project.projectName,
+        approvedBy: req.user.name,
+        approvalDate: project.approvals.paccApprovalDate,
+        comments: comments
+      });
+    } else {
+      // Create rejection message for GP user
+      const gpUserId = project.createdBy._id;
+      const conversationId = Message.generateConversationId(project._id, gpUserId, req.user._id);
+
+      const rejectionContent = `Project "${project.projectName}" has been rejected by District PACC.\n\n${comments ? `Reason: ${comments}` : 'No specific reason provided.'}\n\nYou can discuss this decision and ask questions using this chat. Please address the concerns mentioned above and resubmit your project proposal if needed.`;
+
+      const rejectionMessage = new Message({
+        conversationId,
+        projectId: project._id,
+        senderId: req.user._id,
+        receiverId: gpUserId,
+        senderRole: 'district_pacc_admin',
+        receiverRole: 'gram_panchayat_user',
+        messageType: 'rejection_reason',
+        content: rejectionContent,
+        priority: 'high',
+        relatedAction: 'project_rejection',
+        metadata: {
+          projectStatus: project.status,
+          rejectionReason: comments || 'No reason provided',
+          queryType: 'rejection_notification',
+          technicalScore: technicalScore || 0,
+          financialScore: financialScore || 0,
+          socialScore: socialScore || 0
+        }
+      });
+
+      await rejectionMessage.save();
+      await rejectionMessage.populate([
+        { path: 'senderId', select: 'name email role' },
+        { path: 'receiverId', select: 'name email role' },
+        { path: 'projectId', select: 'projectName status' }
+      ]);
+
+      // Send real-time notification
+      socketService.notifyNewMessage(rejectionMessage);
+      socketService.notifyProjectRejection(project._id, gpUserId, req.user._id, {
+        projectName: project.projectName,
+        rejectedBy: req.user.name,
+        rejectionDate: project.approvals.paccApprovalDate,
+        reason: comments,
+        conversationId
+      });
     }
 
     res.status(200).json({

@@ -352,22 +352,6 @@ const Login = () => {
                 Access your role-based dashboard
               </p>
               
-              {/* Demo Credentials Section */}
-              <div className="mt-4 p-3 bg-blue-800/50 rounded-lg border border-blue-400/30">
-                <h4 className="text-sm font-semibold text-white mb-2">Available Demo Accounts:</h4>
-                <div className="text-xs text-blue-100 space-y-1">
-                  <p><strong>Password:</strong> 123123 (for all roles)</p>
-                  <p className="text-blue-200">Sample Logins:</p>
-                  <ul className="ml-2 space-y-0.5 text-blue-200">
-                    <li>• central.admin@pmajay.gov.in</li>
-                    <li>• state.nodal@maharashtra.gov.in</li>
-                    <li>• treasury@maharashtra.gov.in</li>
-                    <li>• collector@mumbai.gov.in</li>
-                    <li>• pacc@mumbai.gov.in</li>
-                    <li>• gp@govandi.gov.in</li>
-                  </ul>
-                </div>
-              </div>
             </CardHeader>
             <CardContent>
               {!showForgotPassword ? (

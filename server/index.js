@@ -6,8 +6,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const http = require('http');
 const connectDB = require('./config/db');
 const errorHandler = require('./middlewares/errorHandler');
+const socketService = require('./utils/socketService');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -20,12 +22,16 @@ const milestoneRoutes = require('./routes/milestoneRoutes');
 const progressRoutes = require('./routes/progressRoutes');
 const fundRoutes = require('./routes/fundRoutes');
 const beneficiaryRoutes = require('./routes/beneficiaryRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 // Connect to database
 connectDB();
 
 // Initialize express
 const app = express();
+
+// Create HTTP server
+const server = http.createServer(app);
 
 // Body parser middleware
 app.use(express.json());
@@ -47,6 +53,7 @@ app.use('/api/dashboard', dashboardRoutes);
 
 // PM-AJAY Project Management API routes
 app.use('/api/projects', projectRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Nested routes for project resources
 app.use('/api/projects/:projectId/milestones', milestoneRoutes);
@@ -71,10 +78,14 @@ app.get('/', (req, res) => {
 // Error handler middleware
 app.use(errorHandler);
 
+// Initialize Socket.IO
+socketService.initialize(server);
+
 // Set port
 const PORT = process.env.PORT || 5000;
 
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`Socket.IO server running on port ${PORT}`);
 });

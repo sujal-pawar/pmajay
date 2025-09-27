@@ -22,8 +22,11 @@ import {
   Building,
   Users,
   MapPin,
-  Calendar
+  Calendar,
+  MessageCircle
 } from 'lucide-react';
+import MessagingComponent from '../MessagingComponent';
+import { useSocket } from '../../contexts/SocketContext';
 import { 
   projectsApi, 
   milestonesApi, 
@@ -93,6 +96,7 @@ interface Project {
 
 const DistrictPACCDashboard: React.FC = () => {
   const { user, token } = useAuth();
+  const { unreadCount } = useSocket();
   const [projects, setProjects] = useState<Project[]>([]);
   const [appraisals, setAppraisals] = useState<ProjectAppraisal[]>([]);
   const [pendingAppraisals, setPendingAppraisals] = useState<Project[]>([]);
@@ -109,6 +113,7 @@ const DistrictPACCDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('appraisals');
   const [error, setError] = useState<string | null>(null);
+  const [messagingOpen, setMessagingOpen] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -297,11 +302,26 @@ const DistrictPACCDashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">District PACC Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">
-            Project Appraisals & Technical Evaluation - {user?.jurisdiction?.district}, {user?.jurisdiction?.state}
-          </p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">District PACC Admin Dashboard</h1>
+            <p className="text-gray-600 mt-2">
+              Project Appraisals & Technical Evaluation - {user?.jurisdiction?.district}, {user?.jurisdiction?.state}
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => setMessagingOpen(true)}
+            className="relative"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Messages
+            {unreadCount > 0 && (
+              <Badge variant="destructive" className="ml-2 text-xs">
+                {unreadCount}
+              </Badge>
+            )}
+          </Button>
         </div>
 
         {/* Key Statistics */}
@@ -708,6 +728,12 @@ const DistrictPACCDashboard: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Messaging Component */}
+      <MessagingComponent 
+        isOpen={messagingOpen} 
+        onClose={() => setMessagingOpen(false)} 
+      />
     </div>
   );
 };

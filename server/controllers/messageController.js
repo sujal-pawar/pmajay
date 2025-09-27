@@ -21,10 +21,19 @@ exports.getConversations = async (req, res) => {
     let conversations = [];
 
     if (userRole === 'gram_panchayat_user') {
+      // First, get all conversations where this user is involved
+      const existingMessages = await Message.find({
+        $or: [
+          { senderId: userId },
+          { receiverId: userId }
+        ]
+      }).distinct('conversationId');
+
+      const conversationIds = new Set();
+
       // Get projects created by this GP user
       const projects = await Project.find({ 
-        createdBy: userId,
-        status: { $in: ['Awaiting PACC Approval', 'On Hold'] }
+        createdBy: userId
       }).populate('createdBy', 'name email');
 
       for (const project of projects) {
@@ -38,73 +47,96 @@ exports.getConversations = async (req, res) => {
         if (paccAdmin) {
           const conversationId = Message.generateConversationId(project._id, userId, paccAdmin._id);
           
-          // Get last message and unread count
-          const lastMessage = await Message.findOne({ conversationId })
-            .sort({ createdAt: -1 })
-            .populate('senderId', 'name');
+          // Only include if there are messages OR project needs PACC approval
+          if (existingMessages.includes(conversationId) || ['Awaiting PACC Approval', 'On Hold'].includes(project.status)) {
+            if (!conversationIds.has(conversationId)) {
+              conversationIds.add(conversationId);
+              
+              // Get last message and unread count
+              const lastMessage = await Message.findOne({ conversationId })
+                .sort({ createdAt: -1 })
+                .populate('senderId', 'name');
 
-          const unreadCount = await Message.countDocuments({
-            conversationId,
-            receiverId: userId,
-            isRead: false
-          });
+              const unreadCount = await Message.countDocuments({
+                conversationId,
+                receiverId: userId,
+                isRead: false
+              });
 
-          conversations.push({
-            conversationId,
-            projectId: project._id,
-            projectName: project.projectName,
-            projectStatus: project.status,
-            partnerId: paccAdmin._id,
-            partnerName: paccAdmin.name,
-            partnerRole: 'district_pacc_admin',
-            lastMessage: lastMessage ? {
-              content: lastMessage.content,
-              timestamp: lastMessage.createdAt,
-              senderName: lastMessage.senderId.name,
-              isFromMe: lastMessage.senderId._id.toString() === userId.toString()
-            } : null,
-            unreadCount
-          });
+              conversations.push({
+                conversationId,
+                projectId: project._id,
+                projectName: project.projectName,
+                projectStatus: project.status,
+                partnerId: paccAdmin._id,
+                partnerName: paccAdmin.name,
+                partnerRole: 'district_pacc_admin',
+                lastMessage: lastMessage ? {
+                  content: lastMessage.content,
+                  timestamp: lastMessage.createdAt,
+                  senderName: lastMessage.senderId.name,
+                  isFromMe: lastMessage.senderId._id.toString() === userId.toString()
+                } : null,
+                unreadCount
+              });
+            }
+          }
         }
       }
     } else if (userRole === 'district_pacc_admin') {
-      // Get projects in this district that are awaiting PACC approval
+      // First, get all conversations where this user is involved
+      const existingMessages = await Message.find({
+        $or: [
+          { senderId: userId },
+          { receiverId: userId }
+        ]
+      }).distinct('conversationId');
+
+      const conversationIds = new Set();
+
+      // Get projects in this district
       const projects = await Project.find({
         'location.district': req.user.jurisdiction.district,
-        'location.state': req.user.jurisdiction.state,
-        status: { $in: ['Awaiting PACC Approval', 'On Hold'] }
+        'location.state': req.user.jurisdiction.state
       }).populate('createdBy', 'name email');
 
       for (const project of projects) {
         const conversationId = Message.generateConversationId(project._id, project.createdBy._id, userId);
         
-        // Get last message and unread count
-        const lastMessage = await Message.findOne({ conversationId })
-          .sort({ createdAt: -1 })
-          .populate('senderId', 'name');
+        // Only include if there are messages OR project needs PACC approval
+        if (existingMessages.includes(conversationId) || ['Awaiting PACC Approval', 'On Hold'].includes(project.status)) {
+          if (!conversationIds.has(conversationId)) {
+            conversationIds.add(conversationId);
+            
+            // Get last message and unread count
+            const lastMessage = await Message.findOne({ conversationId })
+              .sort({ createdAt: -1 })
+              .populate('senderId', 'name');
 
-        const unreadCount = await Message.countDocuments({
-          conversationId,
-          receiverId: userId,
-          isRead: false
-        });
+            const unreadCount = await Message.countDocuments({
+              conversationId,
+              receiverId: userId,
+              isRead: false
+            });
 
-        conversations.push({
-          conversationId,
-          projectId: project._id,
-          projectName: project.projectName,
-          projectStatus: project.status,
-          partnerId: project.createdBy._id,
-          partnerName: project.createdBy.name,
-          partnerRole: 'gram_panchayat_user',
-          lastMessage: lastMessage ? {
-            content: lastMessage.content,
-            timestamp: lastMessage.createdAt,
-            senderName: lastMessage.senderId.name,
-            isFromMe: lastMessage.senderId._id.toString() === userId.toString()
-          } : null,
-          unreadCount
-        });
+            conversations.push({
+              conversationId,
+              projectId: project._id,
+              projectName: project.projectName,
+              projectStatus: project.status,
+              partnerId: project.createdBy._id,
+              partnerName: project.createdBy.name,
+              partnerRole: 'gram_panchayat_user',
+              lastMessage: lastMessage ? {
+                content: lastMessage.content,
+                timestamp: lastMessage.createdAt,
+                senderName: lastMessage.senderId.name,
+                isFromMe: lastMessage.senderId._id.toString() === userId.toString()
+              } : null,
+              unreadCount
+            });
+          }
+        }
       }
     }
 

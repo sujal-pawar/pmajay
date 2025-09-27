@@ -189,8 +189,12 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   // Load conversations from API
   const loadConversations = async () => {
+    console.log('loadConversations called, token:', token ? 'present' : 'missing');
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/messages/conversations`, {
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/messages/conversations`;
+      console.log('Fetching conversations from:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -198,13 +202,20 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         credentials: 'include'
       });
 
+      console.log('Conversations API response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Conversations data received:', data);
         setConversations(data.data || []);
         
         // Calculate total unread count
         const totalUnread = (data.data || []).reduce((sum: number, conv: Conversation) => sum + conv.unreadCount, 0);
         setUnreadCount(totalUnread);
+        console.log('Set conversations count:', (data.data || []).length, 'unread:', totalUnread);
+      } else {
+        const errorText = await response.text();
+        console.error('Error response from conversations API:', errorText);
       }
     } catch (error) {
       console.error('Error loading conversations:', error);

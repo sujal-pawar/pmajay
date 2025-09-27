@@ -188,7 +188,18 @@ const Login = () => {
                 Department of Social Justice & Empowerment, Government of India
               </p>
             </div>
+            
           </div>
+          {/* Registration Notice */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm p-4 mb-8 text-center">
+          <p className="text-gray-700">
+            All Institute or university have to send the signed{" "}
+            <span className="text-blue-600 font-medium cursor-pointer hover:underline">
+              REGISTRATION FORM
+            </span>{" "}
+            to email id <strong>Singh[dot]Ramesh[at]gov[dot]in</strong> to obtain the login details.
+          </p>
+        </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8 items-start">

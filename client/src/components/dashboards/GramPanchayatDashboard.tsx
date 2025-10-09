@@ -266,96 +266,117 @@ const GramPanchayatDashboard: React.FC<GramPanchayatDashboardProps> = ({ classNa
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-10 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Projects</CardTitle>
-            <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProjects}</div>
-          </CardContent>
-        </Card>
+      <div className="w-full px-2">
+  <div className="
+    grid 
+    grid-cols-1 
+    gap-4
+    sm:grid-cols-2 
+    md:grid-cols-3
+    lg:grid-cols-5
+    xl:grid-cols-6
+    2xl:grid-cols-8
+    overflow-x-auto
+  ">
+    {/* Projects */}
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">Projects</CardTitle>
+        <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{stats.totalProjects}</div>
+      </CardContent>
+    </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
-            <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.activeProjects}</div>
-          </CardContent>
-        </Card>
+    {/* Active */}
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">Active</CardTitle>
+        <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold text-green-600">{stats.activeProjects}</div>
+      </CardContent>
+    </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.completedProjects}</div>
-          </CardContent>
-        </Card>
+    {/* Completed */}
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">Completed</CardTitle>
+        <CheckCircleIcon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold text-blue-600">{stats.completedProjects}</div>
+      </CardContent>
+    </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Milestones</CardTitle>
-            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalMilestones}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.completedMilestones} completed
-            </p>
-          </CardContent>
-        </Card>
+    {/* Milestones */}
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">Milestones</CardTitle>
+        <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{stats.totalMilestones}</div>
+        <p className="text-xs text-muted-foreground">
+          {stats.completedMilestones} completed
+        </p>
+      </CardContent>
+    </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Verification</CardTitle>
-            <AlertTriangleIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.pendingVerification}</div>
-          </CardContent>
-        </Card>
+    {/* Pending Verification */}
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">Pending Verification</CardTitle>
+        <AlertTriangleIcon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold text-orange-600">{stats.pendingVerification}</div>
+      </CardContent>
+    </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Beneficiaries</CardTitle>
-            <UsersIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalBeneficiaries}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.verifiedBeneficiaries} verified
-            </p>
-          </CardContent>
-        </Card>
+    {/* Beneficiaries */}
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">Beneficiaries</CardTitle>
+        <UsersIcon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{stats.totalBeneficiaries}</div>
+        <p className="text-xs text-muted-foreground">
+          {stats.verifiedBeneficiaries} verified
+        </p>
+      </CardContent>
+    </Card>
 
-        <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
-            <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{formatCurrency(stats.totalBudget)}</div>
-          </CardContent>
-        </Card>
+    {/* Total Budget */}
+    <Card className="col-span-1 sm:col-span-2">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
+        <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-xl font-bold">{formatCurrency(stats.totalBudget)}</div>
+      </CardContent>
+    </Card>
 
-        <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Utilized Budget</CardTitle>
-            <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold">{formatCurrency(stats.utilizedBudget)}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.totalBudget > 0 ? `${Math.round((stats.utilizedBudget / stats.totalBudget) * 100)}%` : '0%'} utilized
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+    {/* Utilized Budget */}
+    <Card className="col-span-1 sm:col-span-2">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">Utilized Budget</CardTitle>
+        <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-xl font-bold">{formatCurrency(stats.utilizedBudget)}</div>
+        <p className="text-xs text-muted-foreground">
+          {stats.totalBudget > 0 ? `${Math.round((stats.utilizedBudget / stats.totalBudget) * 100)}%` : '0%'} utilized
+        </p>
+      </CardContent>
+    </Card>
+  </div>
+</div>
+
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

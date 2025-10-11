@@ -104,7 +104,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   // Initialize socket connection
   useEffect(() => {
     if (user && token && ['gram_panchayat_user', 'district_pacc_admin'].includes(user.role)) {
-      const socketInstance = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
+      const socketInstance = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://pmajay.onrender.com', {
         auth: {
           token: token
         },
@@ -191,7 +191,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const loadConversations = async () => {
     console.log('loadConversations called, token:', token ? 'present' : 'missing');
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/messages/conversations`;
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'https://pmajay.onrender.com/api'}/messages/conversations`;
       console.log('Fetching conversations from:', apiUrl);
       
       const response = await fetch(apiUrl, {
@@ -226,7 +226,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const loadMessages = async (conversationId: string) => {
     console.log('loadMessages called for conversationId:', conversationId);
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/messages/conversation/${conversationId}`;
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'https://pmajay.onrender.com/api'}/messages/conversation/${conversationId}`;
       console.log('Fetching messages from:', apiUrl);
       
       const response = await fetch(apiUrl, {
@@ -281,7 +281,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   }) => {
     console.log('sendMessage called with data:', data);
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/messages/send`;
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'https://pmajay.onrender.com/api'}/messages/send`;
       console.log('Sending message to:', apiUrl);
       
       const response = await fetch(apiUrl, {
@@ -319,7 +319,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   const markMessagesAsRead = async (conversationId: string) => {
     try {
-      await fetch(`${import.meta.env.VITE_API_URL}/api/messages/mark-read/${conversationId}`, {
+      await fetch(`${import.meta.env.VITE_API_URL || 'https://pmajay.onrender.com/api'}/messages/mark-read/${conversationId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -344,7 +344,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     console.log('initiateConversation called with:', { projectId, content, token: token ? 'present' : 'missing' });
     
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/messages/initiate-conversation`;
+      const apiUrl = `${import.meta.env.VITE_API_URL || 'https://pmajay.onrender.com/api'}/messages/initiate-conversation`;
       console.log('Making API call to:', apiUrl);
       
       const response = await fetch(apiUrl, {

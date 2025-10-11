@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RefreshCw, Eye, EyeOff } from "lucide-react";
 import govtEmblem from "@/assets/govt-emblem.png";
+import { logDebugInfo } from "@/debug";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,6 +15,12 @@ const Login = () => {
     password: "",
     captchaInput: ""
   });
+
+  // Debug logging on component mount
+  useEffect(() => {
+    logDebugInfo();
+    refreshCaptcha();
+  }, []);
 
   const refreshCaptcha = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

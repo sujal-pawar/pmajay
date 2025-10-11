@@ -52,16 +52,16 @@ app.use(cors({
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    // List of allowed origins
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000', 
-      'https://pmajay.vercel.app',
-      'https://pmajay-onrender.onrender.com',
-      process.env.CLIENT_URL
-    ].filter(Boolean); // Remove any undefined values
+    // Normalize origin by removing trailing slash
+    const normalizedOrigin = origin.replace(/\/$/, '');
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // List of allowed origins (normalized - no trailing slashes)
+    const allowedOrigins = [     
+      'http://localhost:3000', 
+      'https://pmajay.vercel.app'
+    ].map(url => url.replace(/\/$/, '')); // Normalize by removing trailing slashes
+    
+    if (allowedOrigins.indexOf(normalizedOrigin) !== -1) {
       callback(null, true);
     } else {
       console.log('CORS blocked request from origin:', origin);

@@ -9,9 +9,15 @@ class SocketService {
   }
 
   initialize(server) {
+    // Define allowed origins for Socket.IO
+    const allowedOrigins = [
+      'http://localhost:3000',  // React dev server
+      'https://pmajay.vercel.app'  // Production frontend
+    ];
+
     this.io = new Server(server, {
       cors: {
-        origin: process.env.NODE_ENV === 'production' ? process.env.CLIENT_URL : ["http://localhost:3000", "http://localhost:5173"],
+        origin: allowedOrigins,
         methods: ["GET", "POST"],
         credentials: true
       }
